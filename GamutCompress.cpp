@@ -39,9 +39,9 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
         cd = dist[i];
       } else {
         if (invert == 0.0f) {
-          cd = thr + 1/(1/(dist[i] - thr) + 1/(lim[i] - thr));
+          cd = thr + 1/(1/(dist[i] - thr) + 1/(1.0f - thr) - 1/(lim[i] - thr));
         } else {
-          cd = thr + 1/(1/(dist[i] - thr) + -1/(lim[i] - thr));
+          cd = thr + 1/(1/(dist[i] - thr) - 1/(1.0f - thr) + 1/(lim[i] - thr));
         }
       }
       if (i==0){ cdist.x = cd; } else if (i==1) { cdist.y = cd;} else if (i==2) {cdist.z = cd;}
