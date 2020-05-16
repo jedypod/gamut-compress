@@ -1,0 +1,55 @@
+set cut_paste_input [stack 0]
+push $cut_paste_input
+Group {
+name GamutCompress_blink
+label "\[value method]: \[value direction]"
+addUserKnob {20 GamutCompress}
+addUserKnob {4 method t "<b>softclip method</b>" M {tanh exp simple "" "" "" ""}}
+addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.2}
+threshold 0.2
+addUserKnob {26 limits_label l " " T <b>limits}
+addUserKnob {7 cyan t "cyan limit" R 0.001 1.25}
+cyan 1
+addUserKnob {7 magenta t "magenta limit" R 0.001 1.25}
+magenta 1
+addUserKnob {7 yellow t "yellow limit" R 0.001 1.25}
+yellow 1
+addUserKnob {26 ""}
+addUserKnob {4 direction M {forward reverse}}
+}
+Input {
+inputs 0
+name Input
+xpos -40
+ypos -10
+}
+AddChannels {
+name AddChannels1
+note_font Helvetica
+xpos -40
+ypos 26
+}
+BlinkScript {
+recompileCount 135
+KernelDescription "2 \"GamutCompression\" iterate pixelWise aa0febcf8c18b21d3bfdd89474ec963235813d60b30c64f56718104bf6d19438 2 \"src\" Read Point \"dst\" Write Point 6 \"threshold\" Float 1 AAAAAA== \"cyan\" Float 1 AAAAAA== \"magenta\" Float 1 AAAAAA== \"yellow\" Float 1 AAAAAA== \"method\" Int 1 AAAAAA== \"invert\" Bool 1 AA== 6 \"threshold\" 1 1 \"cyan\" 1 1 \"magenta\" 1 1 \"yellow\" 1 1 \"method\" 1 1 \"invert\" 1 1 2 \"thr\" Float 1 1 AAAAAA== \"lim\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA=="
+kernelSource "kernel GamutCompression : ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float threshold;\n    float cyan;\n    float magenta;\n    float yellow;\n    int method;\n    bool invert;\n\n  local:\n  float thr;\n  float3 lim;\n\n\n  void init() \{\n    // thr is the complement of threshold. \n    // that is: the percentage of the core gamut to protect\n    thr = 1.0f - threshold;\n\n    // bias limits by color component\n    // range is limited to 0.00001 > lim < 1/thr\n    // cyan = 0: no compression\n    // cyan = 1: \"normal\" compression with limit at 1.0\n    // 1 > cyan < 1/thr : compress more than edge of gamut. max = hard clip (e.g., thr=0.8, max = 1.25)\n    lim = float3(\n      1.0f/max(0.00001f, min(1.0f/thr, cyan)), \n      1.0f/max(0.00001f, min(1.0f/thr, magenta)),\n      1.0f/max(0.00001f, min(1.0f/thr, yellow))\n      );\n  \}\n\n  // calc hyperbolic tangent\n  float tanh( float in) \{\n    float f = exp(2.0f*in);\n    return (f-1.0f) / (f+1.0f);\n  \}\n\n  // calc inverse hyperbolic tangent\n  float atanh( float in) \{\n    return log((1.0f+in)/(1.0f-in))/2.0f;\n  \}\n\n  // calc compressed distance\n  float3 compress(float3 dist) \{\n    float3 cdist;\n    float cd;\n\n    // method 0 : tanh - hyperbolic tangent compression method suggested by Thomas Mansencal https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/2\n    // method 1 : exp - natural exponent compression method\n    // method 2 : simple - simple Reinhard type compression suggested by Nick Shaw and Lars Borg\n      // https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/3\n      // https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective/2715/52\n    // example plots for each method: https://www.desmos.com/calculator/x69iyptspq\n\n    for (int i = 0; i < 3; i++) \{\n      if (dist\[i] < thr) \{\n        cd = dist\[i];\n      \} else \{\n        if (method == 0.0f) \{\n          if (invert == 0.0f) \{\n            cd = thr + (lim\[i] - thr) * tanh( ( (dist\[i] - thr)/( lim\[i]-thr)));\n          \} else \{\n              cd = thr + (lim\[i] - thr) * atanh( dist\[i]/( lim\[i] - thr) - thr/( lim\[i] - thr));\n          \}\n        \} else if (method == 1.0f) \{\n          if (invert == 0.0f) \{\n            cd = lim\[i]-(lim\[i]-thr)*exp(-(((dist\[i]-thr)*((1.0f*lim\[i])/(lim\[i]-thr))/lim\[i])));\n          \} else \{\n            cd = -log( (dist\[i]-lim\[i])/(thr-lim\[i]))*(-thr+lim\[i])/1.0f+thr;\n          \}\n        \} else if (method == 2.0f) \{\n          if (invert == 0.0f) \{\n            cd = thr + 1/(1/(dist\[i] - thr) + 1/(lim\[i] - thr));\n          \} else \{\n            cd = thr + 1/(1/(dist\[i] - thr) + -1/(lim\[i] - thr));\n          \}\n        \}\n      \}\n      if (i==0)\{ cdist.x = cd; \} else if (i==1) \{ cdist.y = cd;\} else if (i==2) \{cdist.z = cd;\}\n    \}\n    return cdist;\n  \}\n\n\n  void process() \{\n    // source pixels\n    float3 rgb = float3(src().x, src().y, src().z);\n\n    // achromatic axis \n    float ach = max(rgb.x, max(rgb.y, rgb.z));\n\n    // distance from the achromatic axis for each color component aka inverse rgb ratios\n    float3 dist = ach == 0.0f ? float3(0.0f, 0.0f, 0.0f) : fabs(rgb-ach)/ach;\n\n    // compress distance with user controlled parameterized shaper function\n    float3 cd = compress(dist);\n\n    // recalculate rgb from compressed distance and achromatic\n    // effectively this scales each color component relative to achromatic axis by the compressed distance\n    float3 c = ach-cd*ach;\n\n    // write output\n    dst() = float4(c.x, c.y, c.z, 1);\n  \}\n\};"
+rebuild ""
+GamutCompression_threshold {{parent.threshold}}
+GamutCompression_cyan {{parent.cyan}}
+GamutCompression_magenta {{parent.magenta}}
+GamutCompression_yellow {{parent.yellow}}
+GamutCompression_method {{parent.method}}
+GamutCompression_invert {{parent.direction}}
+rebuild_finalise ""
+name GamutCompress
+note_font Helvetica
+selected true
+xpos -40
+ypos 82
+}
+Output {
+name Output
+xpos -40
+ypos 134
+}
+end_group
