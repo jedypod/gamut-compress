@@ -68,6 +68,6 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
     float3 c = ach-cd*ach;
 
     // write output
-    dst() = float4(c.x, c.y, c.z, 1);
+    dst() = float4(c.x, c.y, c.z, src().w);
   }
 };
