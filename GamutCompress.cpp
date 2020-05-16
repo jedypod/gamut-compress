@@ -7,7 +7,6 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
     float cyan;
     float magenta;
     float yellow;
-    int method;
     bool invert;
 
   local:
@@ -18,64 +17,31 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
   void init() {
     // thr is the percentage of the core gamut to protect: the complement of threshold.
     thr = 1.0f - threshold;
-
-    // bias limits by color component
-    // range is limited to 0.00001 > lim < 1/thr
-    // cyan = 0: no compression
-    // cyan = 1: "normal" compression with limit at 1.0
-    // 1 > cyan < 1/thr : compress more than edge of gamut. max = hard clip (e.g., thr=0.8, max = 1.25)
-    lim = float3(
-      1.0f/max(0.00001f, min(1.0f/thr, cyan)), 
-      1.0f/max(0.00001f, min(1.0f/thr, magenta)),
-      1.0f/max(0.00001f, min(1.0f/thr, yellow))
-      );
+    
+    // lim is the max distance from the gamut boundary that will be compressed
+    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
+    lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
   }
 
-  // calc hyperbolic tangent
-  float tanh( float in) {
-    float f = exp(2.0f*in);
-    return (f-1.0f) / (f+1.0f);
-  }
-
-  // calc inverse hyperbolic tangent
-  float atanh( float in) {
-    return log((1.0f+in)/(1.0f-in))/2.0f;
-  }
 
   // calc compressed distance
   float3 compress(float3 dist) {
     float3 cdist;
     float cd;
 
-    // method 0 : tanh - hyperbolic tangent compression method suggested by Thomas Mansencal https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/2
-    // method 1 : exp - natural exponent compression method
-    // method 2 : simple - simple Reinhard type compression suggested by Nick Shaw and Lars Borg
+    // simple Reinhard type compression suggested by Nick Shaw and Lars Borg
       // https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/3
       // https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective/2715/52
-    // example plots for each method: https://www.desmos.com/calculator/x69iyptspq
+    // example plot: https://www.desmos.com/calculator/h2n8smtgkl
 
     for (int i = 0; i < 3; i++) {
       if (dist[i] < thr) {
         cd = dist[i];
       } else {
-        if (method == 0.0f) {
-          if (invert == 0.0f) {
-            cd = thr + (lim[i] - thr) * tanh( ( (dist[i] - thr)/( lim[i]-thr)));
-          } else {
-              cd = thr + (lim[i] - thr) * atanh( dist[i]/( lim[i] - thr) - thr/( lim[i] - thr));
-          }
-        } else if (method == 1.0f) {
-          if (invert == 0.0f) {
-            cd = lim[i]-(lim[i]-thr)*exp(-(((dist[i]-thr)*((1.0f*lim[i])/(lim[i]-thr))/lim[i])));
-          } else {
-            cd = -log( (dist[i]-lim[i])/(thr-lim[i]))*(-thr+lim[i])/1.0f+thr;
-          }
-        } else if (method == 2.0f) {
-          if (invert == 0.0f) {
-            cd = thr + 1/(1/(dist[i] - thr) + 1/(lim[i] - thr));
-          } else {
-            cd = thr + 1/(1/(dist[i] - thr) + -1/(lim[i] - thr));
-          }
+        if (invert == 0.0f) {
+          cd = thr + 1/(1/(dist[i] - thr) + 1/(lim[i] - thr));
+        } else {
+          cd = thr + 1/(1/(dist[i] - thr) + -1/(lim[i] - thr));
         }
       }
       if (i==0){ cdist.x = cd; } else if (i==1) { cdist.y = cd;} else if (i==2) {cdist.z = cd;}
