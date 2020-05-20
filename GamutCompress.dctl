@@ -1,0 +1,91 @@
+DEFINE_UI_PARAMS(threshold, threshold, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.3f, 0.0f);
+DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescg}, {acescct, acescg});
+DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
+
+
+// Convert acescg to acescct
+__DEVICE__ float lin_to_acescct(float in) {
+  if (in <= 0.0078125f) {
+    return 10.5402377416545f * in + 0.0729055341958355f;
+  } else {
+    return (_log2f(in) + 9.72f) / 17.52f;
+  }
+}
+
+// Convert acescct to acescg
+__DEVICE__ float acescct_to_lin(float in) {
+  if (in > 0.155251141552511f) {
+    return _powf( 2.0f, in*17.52f - 9.72f);
+  } else {
+    return (in - 0.0729055341958355f) / 10.5402377416545f;
+  }
+}
+
+// calculate compressed distance
+__DEVICE__ float compress(float dist, float lim, float thr, bool invert) {
+  float cdist; // compressed distance
+  if (dist < thr) {
+    cdist = dist;
+  } else {
+    // simple Reinhard compression curve - plot: https://www.desmos.com/calculator/h2n8smtgkl
+    if (invert == 0) {
+      cdist = thr + 1.0f/(1.0f/(dist - thr) + 1.0f/(1.0f - thr) - 1.0f/(lim - thr));
+    } else {
+      cdist = thr + 1.0f/(1.0f/(dist - thr) - 1.0f/(1.0f - thr) + 1.0f/(lim - thr));
+    }
+  }
+  return cdist;
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B) 
+{
+  // source pixels
+  float3 rgb = make_float3(p_R, p_G, p_B);
+  
+  if (working_colorspace == acescct) {
+    rgb.x = acescct_to_lin(rgb.x);
+    rgb.y = acescct_to_lin(rgb.y);
+    rgb.z = acescct_to_lin(rgb.z);
+  }
+
+  // thr is the percentage of the core gamut to protect: the complement of threshold.
+  float thr = 1 - threshold;
+
+  // lim is the max distance from the gamut boundary that will be compressed
+  // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
+  float3 lim = make_float3(cyan+1, magenta+1, yellow+1);
+
+  // achromatic axis 
+  float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
+
+  // distance from the achromatic axis for each color component aka inverse rgb ratios
+  float3 dist;
+  dist.x = _fabs(rgb.x-ach)/ach;
+  dist.y = _fabs(rgb.y-ach)/ach;
+  dist.z = _fabs(rgb.z-ach)/ach;
+
+  // compress distance with user controlled parameterized shaper function
+  float3 cdist = make_float3(
+    compress(dist.x, lim.x, thr, invert),
+    compress(dist.y, lim.y, thr, invert),
+    compress(dist.z, lim.z, thr, invert));
+
+  // recalculate rgb from compressed distance and achromatic
+  // effectively this scales each color component relative to achromatic axis by the compressed distance
+  float3 crgb = make_float3(
+    ach-cdist.x*ach,
+    ach-cdist.y*ach,
+    ach-cdist.z*ach);
+
+  if (working_colorspace == acescct) {
+    crgb.x = lin_to_acescct(crgb.x);
+    crgb.y = lin_to_acescct(crgb.y);
+    crgb.z = lin_to_acescct(crgb.z);
+  }
+
+  // write output
+  return crgb;
+}
