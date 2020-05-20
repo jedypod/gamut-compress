@@ -25,30 +25,19 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
 
 
   // calc compressed distance
-  float3 compress(float3 dist) {
-    float3 cdist;
-    float cd;
-
-    // simple Reinhard type compression suggested by Nick Shaw and Lars Borg
-      // https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/3
-      // https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective/2715/52
-    // example plot: https://www.desmos.com/calculator/h2n8smtgkl
-
-    for (int i = 0; i < 3; i++) {
-      if (dist[i] < thr) {
-        cd = dist[i];
+  float compress(float dist, float lim) {
+    float cdist;
+      if (dist < thr) {
+        cdist = dist;
       } else {
         if (invert == 0) {
-          cd = thr + 1/(1/(dist[i] - thr) + 1/(1 - thr) - 1/(lim[i] - thr));
+          cdist = thr + 1/(1/(dist - thr) + 1/(1 - thr) - 1/(lim - thr));
         } else {
-          cd = thr + 1/(1/(dist[i] - thr) - 1/(1 - thr) + 1/(lim[i] - thr));
+          cdist = thr + 1/(1/(dist - thr) - 1/(1 - thr) + 1/(lim - thr));
         }
       }
-      if (i==0){ cdist.x = cd; } else if (i==1) { cdist.y = cd;} else if (i==2) {cdist.z = cd;}
-    }
     return cdist;
   }
-
 
   void process() {
     // source pixels
@@ -61,13 +50,16 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
     float3 dist = ach == 0 ? float3(0, 0, 0) : fabs(rgb-ach)/ach;
 
     // compress distance with user controlled parameterized shaper function
-    float3 cd = compress(dist);
+    float3 cdist = float3(
+      compress(dist.x, lim.x),
+      compress(dist.y, lim.y),
+      compress(dist.z, lim.z));
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
-    float3 c = ach-cd*ach;
+    float3 crgb = ach-cdist*ach;
 
     // write output
-    dst() = float4(c.x, c.y, c.z, src().w);
+    dst() = float4(crgb.x, crgb.y, crgb.z, src().w);
   }
 };

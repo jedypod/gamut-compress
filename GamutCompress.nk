@@ -1,102 +1,57 @@
 set cut_paste_input [stack 0]
 push $cut_paste_input
 Group {
-name GamutCompress
-label "\[value direction]"
-addUserKnob {20 GamutCompress}
-addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.2}
-threshold 0.2
-addUserKnob {26 limits_label l " " T <b>limits}
-addUserKnob {7 cyan t "cyan limit" R 0.001 1}
-cyan 0.25
-addUserKnob {7 magenta t "magenta limit" R 0.001 1}
-magenta 0.25
-addUserKnob {7 yellow t "yellow limit" R 0.001 1}
-yellow 0.25
-addUserKnob {26 ""}
-addUserKnob {4 direction M {forward inverse}}
-addUserKnob {20 info_tab l Info}
-addUserKnob {26 info_label l " " T "<font color=#ccc>\n<b>GamutCompress</b> brings out of gamut colors back into gamut.<br><br>\n\n<b>Threshold</b><br>\nPercentage of the gamut to affect. If threshold is 0.2, <br>\nthe inner 80% of the gamut will be unaffected and <br>\nout of gamut values will be compressed into <br>\nthe outer 20% of the gamut.<br><br>\n\n<b>Limits</b><br>\nPer color component control to specify what distance will be <br>\ncompressed to the gamut boundary. For example, <br>\na value of 0.2 will map colors with a distance of 1.2 from <br>\nthe achromatic axis to 1.0, which is the gamut boundary.<br><br><br>\n\n<b>Direction</b><br>\nSpecifies whether to apply or inverse the gamut compression operation.\n<br><br>\n<a href=https://github.com/jedypod/gamut-compress>Additional Documentation</a><br><br>\n\nWritten by <a href=https://github.com/jedypod color=red>Jed Smith</a> with <a href=https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective>help</a> from the <a href=https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group>ACES Gamut Mapping VWG</a>"}
+ name GamutCompress_blink
+ label "\[value method] : \[value direction]"
+ addUserKnob {20 GamutCompress}
+ addUserKnob {4 method t "Choose the type of distance compression function you want to use" M {simple}}
+ addUserKnob {6 use_gpu l "use gpu" t "use gpu for blinkscript node" -STARTLINE}
+ use_gpu true
+ addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.2}
+ threshold 0.2
+ addUserKnob {26 max_distance_label l " " T "<b>max distance"}
+ addUserKnob {7 cyan t "cyan limit" R 0.001 1}
+ cyan 0.25
+ addUserKnob {7 magenta t "magenta limit" R 0.001 1}
+ magenta 0.25
+ addUserKnob {7 yellow t "yellow limit" R 0.001 1}
+ yellow 0.25
+ addUserKnob {26 ""}
+ addUserKnob {4 direction M {forward inverse}}
+ addUserKnob {20 info_tab l Info}
+ addUserKnob {26 info_label l " " T "<font color=#ccc>\n<b>GamutCompress</b> brings out of gamut colors back into gamut.<br><br>\n\n<b>Threshold</b><br>\nPercentage of the gamut to affect. If threshold is 0.2, <br>\nthe inner 80% of the gamut will be unaffected and <br>\nout of gamut values will be compressed into <br>\nthe outer 20% of the gamut's color volume.<br><br>\n\n<b>Max Distance</b><br>\nPer color component control to specify what distance will be <br>\ncompressed to the gamut boundary. For example, <br>\na value of 0.2 will map colors with a distance of 1.2 from <br>\nthe achromatic axis to 1.0, which is the gamut boundary.<br><br><br>\n\n<b>Direction</b><br>\nSpecifies whether to apply or inverse the gamut compression operation.\n<br><br>\n<a href=https://github.com/jedypod/gamut-compress>Additional Documentation</a><br><br>\n\nWritten by <a href=https://github.com/jedypod color=red>Jed Smith</a> with <a href=https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective>help</a> from the <a href=https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group>ACES Gamut Mapping VWG</a>"}
 }
-Input {
-inputs 0
-name Input
-xpos -40
-ypos 62
-}
-Dot {
-name Dot1
-note_font "Helvetica Bold"
-note_font_size 24
-note_font_color 0xff
-xpos -6
-ypos 114
-}
-set Na20da940 [stack 0]
-Expression {
-temp_name0 ach
-temp_expr0 max(r,g,b)
-temp_name1 d_r
-temp_expr1 ach==0?0:fabs(r-ach)/ach
-temp_name2 d_g
-temp_expr2 ach==0?0:fabs(g-ach)/ach
-temp_name3 d_b
-temp_expr3 ach==0?0:fabs(b-ach)/ach
-expr0 "ach-(d_r<thr?d_r:(thr+1/(1/(d_r-thr)-1/(1-thr)+1/(lim_x-thr))))*ach"
-expr1 "ach-(d_g<thr?d_g:(thr+1/(1/(d_g-thr)-1/(1-thr)+1/(lim_y-thr))))*ach"
-expr2 "ach-(d_b<thr?d_b:(thr+1/(1/(d_b-thr)-1/(1-thr)+1/(lim_z-thr))))*ach"
-name GamutUnCompress
-note_font Helvetica
-xpos 70
-ypos 159
-addUserKnob {20 User}
-addUserKnob {7 thr t "complement of threshold"}
-thr {{1-parent.threshold}}
-addUserKnob {7 lim_x R 0 1.25}
-lim_x {{cyan+1}}
-addUserKnob {7 lim_y R 0 1.25}
-lim_y {{magenta+1}}
-addUserKnob {7 lim_z R 0 1.25}
-lim_z {{yellow+1}}
-}
-push $Na20da940
-Expression {
-temp_name0 ach
-temp_expr0 max(r,g,b)
-temp_name1 d_r
-temp_expr1 ach==0?0:fabs(r-ach)/ach
-temp_name2 d_g
-temp_expr2 ach==0?0:fabs(g-ach)/ach
-temp_name3 d_b
-temp_expr3 ach==0?0:fabs(b-ach)/ach
-expr0 "ach-(d_r<thr?d_r:(thr+1/(1/(d_r-thr)+1/(1-thr)-1/(lim_x-thr))) )*ach"
-expr1 "ach-(d_g<thr?d_g:(thr+1/(1/(d_g-thr)+1/(1-thr)-1/(lim_y-thr))) )*ach"
-expr2 "ach-(d_b<thr?d_b:(thr+1/(1/(d_b-thr)+1/(1-thr)-1/(lim_z-thr))) )*ach"
-name GamutCompress
-note_font Helvetica
-xpos -150
-ypos 159
-addUserKnob {20 User}
-addUserKnob {7 thr t "complement of threshold"}
-thr {{1-parent.threshold}}
-addUserKnob {7 lim_x R 0 1.25}
-lim_x {{cyan+1}}
-addUserKnob {7 lim_y R 0 1.25}
-lim_y {{magenta+1}}
-addUserKnob {7 lim_z R 0 1.25}
-lim_z {{yellow+1}}
-}
-Switch {
-inputs 2
-which {{parent.direction}}
-name switch_direction
-note_font Helvetica
-xpos -40
-ypos 255
-}
-Output {
-name Output
-xpos -40
-ypos 326
-}
+ Input {
+  inputs 0
+  name Input
+  xpos -40
+  ypos -10
+ }
+ AddChannels {
+  name AddChannels1
+  note_font Helvetica
+  xpos -40
+  ypos 26
+ }
+ BlinkScript {
+  KernelDescription "2 \"GamutCompression\" iterate pixelWise 36309976460dee46037dd948b280a259f319417da60ea414afddb90dfdb43edb 2 \"src\" Read Point \"dst\" Write Point 5 \"threshold\" Float 1 AAAAAA== \"cyan\" Float 1 AAAAAA== \"magenta\" Float 1 AAAAAA== \"yellow\" Float 1 AAAAAA== \"invert\" Bool 1 AA== 5 \"threshold\" 1 1 \"cyan\" 1 1 \"magenta\" 1 1 \"yellow\" 1 1 \"invert\" 1 1 2 \"thr\" Float 1 1 AAAAAA== \"lim\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA=="
+  kernelSource "kernel GamutCompression : ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float threshold;\n    float cyan;\n    float magenta;\n    float yellow;\n    bool invert;\n\n  local:\n  float thr;\n  float3 lim;\n\n\n  void init() \{\n    // thr is the percentage of the core gamut to protect: the complement of threshold.\n    thr = 1 - threshold;\n    \n    // lim is the max distance from the gamut boundary that will be compressed\n    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary\n    lim = float3(cyan+1, magenta+1, yellow+1);\n  \}\n\n\n  // calc compressed distance\n  float compress(float dist, float lim) \{\n    float cdist;\n      if (dist < thr) \{\n        cdist = dist;\n      \} else \{\n        if (invert == 0) \{\n          cdist = thr + 1/(1/(dist - thr) + 1/(1 - thr) - 1/(lim - thr));\n        \} else \{\n          cdist = thr + 1/(1/(dist - thr) - 1/(1 - thr) + 1/(lim - thr));\n        \}\n      \}\n    return cdist;\n  \}\n\n  void process() \{\n    // source pixels\n    float3 rgb = float3(src().x, src().y, src().z);\n\n    // achromatic axis \n    float ach = max(rgb.x, max(rgb.y, rgb.z));\n\n    // distance from the achromatic axis for each color component aka inverse rgb ratios\n    float3 dist = ach == 0 ? float3(0, 0, 0) : fabs(rgb-ach)/ach;\n\n    // compress distance with user controlled parameterized shaper function\n    float3 cdist = float3(\n      compress(dist.x, lim.x),\n      compress(dist.y, lim.y),\n      compress(dist.z, lim.z));\n\n    // recalculate rgb from compressed distance and achromatic\n    // effectively this scales each color component relative to achromatic axis by the compressed distance\n    float3 crgb = ach-cdist*ach;\n\n    // write output\n    dst() = float4(crgb.x, crgb.y, crgb.z, src().w);\n  \}\n\};"
+  useGPUIfAvailable {{parent.use_gpu}}
+  rebuild ""
+  GamutCompression_threshold {{parent.threshold}}
+  GamutCompression_cyan {{parent.cyan}}
+  GamutCompression_magenta {{parent.magenta}}
+  GamutCompression_yellow {{parent.yellow}}
+  GamutCompression_invert {{parent.direction}}
+  rebuild_finalise ""
+  name GamutCompress
+  selected true
+  xpos -40
+  ypos 80
+ }
+ Output {
+  name Output
+  xpos -40
+  ypos 134
+ }
 end_group
