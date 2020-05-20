@@ -16,11 +16,11 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
 
   void init() {
     // thr is the percentage of the core gamut to protect: the complement of threshold.
-    thr = 1.0f - threshold;
+    thr = 1 - threshold;
     
     // lim is the max distance from the gamut boundary that will be compressed
     // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
-    lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
+    lim = float3(cyan+1, magenta+1, yellow+1);
   }
 
 
@@ -38,10 +38,10 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
       if (dist[i] < thr) {
         cd = dist[i];
       } else {
-        if (invert == 0.0f) {
-          cd = thr + 1/(1/(dist[i] - thr) + 1/(1.0f - thr) - 1/(lim[i] - thr));
+        if (invert == 0) {
+          cd = thr + 1/(1/(dist[i] - thr) + 1/(1 - thr) - 1/(lim[i] - thr));
         } else {
-          cd = thr + 1/(1/(dist[i] - thr) - 1/(1.0f - thr) + 1/(lim[i] - thr));
+          cd = thr + 1/(1/(dist[i] - thr) - 1/(1 - thr) + 1/(lim[i] - thr));
         }
       }
       if (i==0){ cdist.x = cd; } else if (i==1) { cdist.y = cd;} else if (i==2) {cdist.z = cd;}
@@ -58,7 +58,7 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
     float ach = max(rgb.x, max(rgb.y, rgb.z));
 
     // distance from the achromatic axis for each color component aka inverse rgb ratios
-    float3 dist = ach == 0.0f ? float3(0.0f, 0.0f, 0.0f) : fabs(rgb-ach)/ach;
+    float3 dist = ach == 0 ? float3(0, 0, 0) : fabs(rgb-ach)/ach;
 
     // compress distance with user controlled parameterized shaper function
     float3 cd = compress(dist);
