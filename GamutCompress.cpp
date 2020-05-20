@@ -99,48 +99,43 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
 
 
   // calc compressed distance
-  float3 compress(float3 dist) {
-    float3 cdist;
-    float cd;
-
-    for (int i = 0; i < 3; i++) {
-      if (dist[i] < thr) {
-        cd = dist[i];
-      } else {
-        if (method == 0) {
-          // simple Reinhard type compression suggested by Nick Shaw and Lars Borg
-          // https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/3
-          // https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective/2715/52
-          // example plot: https://www.desmos.com/calculator/h2n8smtgkl
-          if (invert == 0) {
-            cd = thr + 1/(1/(dist[i] - thr) + 1/(1 - thr) - 1/(lim[i] - thr));
-          } else {
-            cd = thr + 1/(1/(dist[i] - thr) - 1/(1 - thr) + 1/(lim[i] - thr));
-          }
-        } else if (method == 1) {
-          // natural exponent compression method: plot https://www.desmos.com/calculator/jf99glamuc
-          if (invert == 0) {
-            cd = lim[i]-(lim[i]-thr)*exp(-(((dist[i]-thr)*((1*lim[i])/(lim[i]-thr))/lim[i])));
-          } else {
-            cd = -log((dist[i]-lim[i])/(thr-lim[i]))*(-thr+lim[i])/1+thr;
-          }
-        } else if (method == 2) {
-          // arctangent compression method: plot https://www.desmos.com/calculator/olmjgev3sl
-          if (invert == 0) {
-            cd = thr + (lim[i] - thr) * 2 / pi * atan(pi/2 * (dist[i] - thr)/(lim[i] - thr));
-          } else {
-            cd = thr + (lim[i] - thr) * 2 / pi * tan(pi/2 * (dist[i] - thr)/(lim[i] - thr));
-          }
-        } else if (method == 3) {
-          // hyperbolic tangent compression method: plot https://www.desmos.com/calculator/sapcakq6t1
-          if (invert == 0) {
-            cd = thr + (lim[i] - thr) * tanh( ( (dist[i]- thr)/( lim[i]-thr)));
-          } else {
-            cd = thr + (lim[i] - thr) * atanh( dist[i]/( lim[i] - thr) - thr/( lim[i] - thr));
-          }
+  float compress(float dist, float lim) {
+    float cdist;
+    if (dist < thr) {
+      cdist = dist;
+    } else {
+      if (method == 0) {
+        // simple Reinhard type compression suggested by Nick Shaw and Lars Borg
+        // https://community.acescentral.com/t/simplistic-gamut-mapping-approaches-in-nuke/2679/3
+        // https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective/2715/52
+        // example plot: https://www.desmos.com/calculator/h2n8smtgkl
+        if (invert == 0) {
+          cdist = thr + 1/(1/(dist - thr) + 1/(1 - thr) - 1/(lim - thr));
+        } else {
+          cdist = thr + 1/(1/(dist - thr) - 1/(1 - thr) + 1/(lim - thr));
+        }
+      } else if (method == 1) {
+        // natural exponent compression method: plot https://www.desmos.com/calculator/jf99glamuc
+        if (invert == 0) {
+          cdist = lim-(lim-thr)*exp(-(((dist-thr)*((1*lim)/(lim-thr))/lim)));
+        } else {
+          cdist = -log((dist-lim)/(thr-lim))*(-thr+lim)/1+thr;
+        }
+      } else if (method == 2) {
+        // arctangent compression method: plot https://www.desmos.com/calculator/olmjgev3sl
+        if (invert == 0) {
+          cdist = thr + (lim - thr) * 2 / pi * atan(pi/2 * (dist - thr)/(lim - thr));
+        } else {
+          cdist = thr + (lim - thr) * 2 / pi * tan(pi/2 * (dist - thr)/(lim - thr));
+        }
+      } else if (method == 3) {
+        // hyperbolic tangent compression method: plot https://www.desmos.com/calculator/sapcakq6t1
+        if (invert == 0) {
+          cdist = thr + (lim - thr) * tanh( ( (dist- thr)/( lim-thr)));
+        } else {
+          cdist = thr + (lim - thr) * atanh( dist/( lim - thr) - thr/( lim - thr));
         }
       }
-      if (i==0){ cdist.x = cd; } else if (i==1) { cdist.y = cd;} else if (i==2) {cdist.z = cd;}
     }
     return cdist;
   }
@@ -158,7 +153,10 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
     float3 dist = ach == 0 ? float3(0, 0, 0) : fabs(rgb-ach)/ach; 
 
     // compress distance with user controlled parameterized shaper function
-    float3 cdist = compress(dist);
+    float3 cdist = float3(
+      compress(dist.x, lim.x),
+      compress(dist.y, lim.y),
+      compress(dist.z, lim.z));
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
