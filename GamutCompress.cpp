@@ -30,7 +30,10 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
       // otherwise, we have to bruteforce the value of limit 
       // such that lim is the value of x where y=1 - also enforce sane ranges to avoid nans
       // importantly, this runs once at the beginning of evaluation, NOT per-pixel!!!
-      lim = float3(bisect(max(0.0001, cyan)+1), bisect(max(0.0001, magenta)+1), bisect(max(0.0001, yellow)+1));
+      lim = float3(
+        bisect(max(0.0001, cyan)+1), 
+        bisect(max(0.0001, magenta)+1), 
+        bisect(max(0.0001, yellow)+1));
     }
   }
 
@@ -98,7 +101,7 @@ kernel GamutCompression : ImageComputationKernel<ePixelWise> {
   }
 
 
-  // calc compressed distance
+  // calculate compressed distance
   float compress(float dist, float lim) {
     float cdist;
     if (dist < thr) {
