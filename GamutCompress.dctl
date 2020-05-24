@@ -63,8 +63,8 @@ __DEVICE__ float bisect(float k, float thr, int method) {
   // set up reasonable initial guesses for each method given output ranges of each function
   if (method == 0) {
     // natural logarithm needs a limit between -inf (linear), and 1 (clip)
-    a = -5;
-    b = 0.96;
+    a = -15;
+    b = 0.98;
   } else if (method == 4) {
     // tanh needs more precision
     a = 1.000001;
@@ -76,7 +76,7 @@ __DEVICE__ float bisect(float k, float thr, int method) {
 
   if (sign(f(a, k, thr, method)) == sign(f(b, k, thr, method))) {
     // bad estimate. return something close to linear
-    if (method == 2) {
+    if ((method == 0) || (method == 2)) {
       return -100;
     } else {
       return 1.999999;
