@@ -84,8 +84,8 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     // set up reasonable initial guesses for each method given output ranges of each function
     if (method == 0) {
       // natural logarithm needs a limit between -inf (linear), and 1 (clip)
-      a = -5;
-      b = 0.96;
+      a = -15;
+      b = 0.98;
     } else if (method == 4) {
       // tanh needs more precision
       a = 1.000001;
@@ -97,7 +97,7 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
 
     if (sign(f(a, k)) == sign(f(b, k))) {
       // bad estimate. return something close to linear
-      if (method == 2) {
+      if ((method == 0) || (method == 2)) {
         return -100;
       } else {
         return 1.999999;
@@ -174,10 +174,11 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
 
   void process() {
     // source pixels
-    float3 rgb = float3(src()[0], src()[1], src()[2]);
+    SampleType(src) rgba = src();
+    float3 rgb = float3(rgba.x, rgba.y, rgba.z);
 
     // achromatic axis 
-    float ach = max(rgb[0], max(rgb[1], rgb[2]));
+    float ach = max(rgb.x, max(rgb.y, rgb.z));
 
     // distance from the achromatic axis for each color component aka inverse rgb ratios
     // distance is normalized by achromatic, so that 1.0 is at gamut boundary, avoid 0 div
@@ -185,15 +186,15 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
 
     // compress distance with user controlled parameterized shaper function
     float3 cdist = float3(
-      compress(dist[0], lim[0]),
-      compress(dist[1], lim[1]),
-      compress(dist[2], lim[2]));
+      compress(dist.x, lim.x),
+      compress(dist.y, lim.y),
+      compress(dist.z, lim.z));
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
     float3 crgb = ach-cdist*ach;
 
     // write to output
-    dst() = float4(crgb[0], crgb[1], crgb[2], src()[3]);
+    dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);
   }
 };
