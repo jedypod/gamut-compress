@@ -11,7 +11,7 @@ Group {
  addUserKnob {22 reset -STARTLINE T "n = nuke.thisNode()\nknobs = \['threshold', 'cyan', 'magenta', 'yellow']\nfor k in knobs:\n    n\[k].setValue(0.2)"}
  addUserKnob {6 use_gpu l "use gpu" t "use gpu for blinkscript node" -STARTLINE}
  use_gpu true
- addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.2}
+ addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.3}
  threshold 0.2
  addUserKnob {26 distance_limit_label l " " T "<b>distance limit" t "Specifies the distance beyond the gamut boundary to map to the gamut boundary for each color component."}
  addUserKnob {7 cyan t "distance limit for the R component." R 0.001 1}
