@@ -4,11 +4,13 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
 
   param:
     float threshold;
+    float shd_rolloff;
     float cyan;
     float magenta;
     float yellow;
     int method;
     bool invert;
+
 
   local:
   float thr;
@@ -19,8 +21,8 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     pi = 3.14159265359;
 
     // thr is the percentage of the core gamut to protect: the complement of threshold.
-    thr = (1 - threshold);
-        
+    thr = 1 - threshold;
+
     // lim is the max distance from the gamut boundary that will be compressed
     // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
     // if method is Reinhard, use the limit as-is
@@ -141,9 +143,9 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
       } else if (method == 1) {
         // simple Reinhard type compression method: https://www.desmos.com/calculator/lkhdtjbodx
         if (invert == 0) {
-          cdist = thr + 1/(1/(dist - thr) + 1/(1 - thr) - 1/(lim - thr));
+          cdist = thr+1/(1/(dist-thr)+1/(1-thr)-1/(lim-thr));
         } else {
-          cdist = thr + 1/(1/(dist - thr) - 1/(1 - thr) + 1/(lim - thr));
+          cdist = thr+1/(1/(dist-thr)-1/(1-thr)+1/(lim-thr));
         }
       } else if (method == 2) {
         // natural exponent compression method: https://www.desmos.com/calculator/s2adnicmmr
@@ -155,16 +157,16 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
       } else if (method == 3) {
         // arctangent compression method: https://www.desmos.com/calculator/h96qmnozpo
         if (invert == 0) {
-          cdist = thr + (lim - thr) * 2 / pi * atan(pi/2 * (dist - thr)/(lim - thr));
+          cdist = thr+(lim-thr)*2/pi*atan(pi/2*(dist-thr)/(lim-thr));
         } else {
-          cdist = thr + (lim - thr) * 2 / pi * tan(pi/2 * (dist - thr)/(lim - thr));
+          cdist = thr+(lim-thr)*2/pi*tan(pi/2*(dist-thr)/(lim-thr));
         }
       } else if (method == 4) {
         // hyperbolic tangent compression method: https://www.desmos.com/calculator/xiwliws24x
         if (invert == 0) {
-          cdist = thr + (lim - thr) * tanh( ( (dist- thr)/( lim-thr)));
+          cdist = thr+(lim-thr)*tanh(((dist-thr)/(lim-thr)));
         } else {
-          cdist = thr + (lim - thr) * atanh( dist/( lim - thr) - thr/( lim - thr));
+          cdist = thr+(lim-thr)*atanh(dist/(lim-thr)-thr/(lim-thr));
         }
       }
     }
@@ -180,9 +182,12 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     // achromatic axis 
     float ach = max(rgb.x, max(rgb.y, rgb.z));
 
+    // achromatic with shadow rolloff below shd_rolloff threshold
+    float ach_shd = 1-( (1-ach)<(1-shd_rolloff)?(1-ach):(1-shd_rolloff)+shd_rolloff*tanh((((1-ach)-(1-shd_rolloff))/shd_rolloff)));
+
     // distance from the achromatic axis for each color component aka inverse rgb ratios
     // distance is normalized by achromatic, so that 1.0 is at gamut boundary, avoid 0 div
-    float3 dist = ach == 0 ? float3(0, 0, 0) : (ach-rgb)/ach;
+    float3 dist = ach_shd == 0 ? float3(0, 0, 0) : (ach-rgb)/ach_shd;
 
     // compress distance with user controlled parameterized shaper function
     float3 cdist = float3(
@@ -192,7 +197,7 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
-    float3 crgb = ach-cdist*ach;
+    float3 crgb = ach-cdist*ach_shd;
 
     // write to output
     dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);
