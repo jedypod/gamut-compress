@@ -1,6 +1,6 @@
 DEFINE_UI_PARAMS(cmethod, method, DCTLUI_COMBO_BOX, 4, {L, R, E, A, T}, {log, reinhard, exp, arctan, tanh});
 DEFINE_UI_PARAMS(threshold, threshold, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.4f, 0.0f);
-DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.0f, 0.0f, 0.1f, 0.0f);
+DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1f, 0.0f);
 DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
@@ -85,7 +85,7 @@ __DEVICE__ float bisect(float k, float thr, int method) {
   }
   c = (a+b)/2.0f;
   y = f(c, k, thr, method);
-  if (y <= tol) {
+  if (_fabs(y) <= tol) {
     return c; // lucky guess
   }
   int n = 1;
@@ -201,13 +201,13 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
 
   // achromatic with shadow rolloff below shd_rolloff threshold
-  float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
+  float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
 
   // distance from the achromatic axis for each color component aka inverse rgb ratios
   float3 dist;
-  dist.x = (ach-rgb.x)/ach_shd;
-  dist.y = (ach-rgb.y)/ach_shd;
-  dist.z = (ach-rgb.z)/ach_shd;
+  dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
+  dist.y = ach_shd == 0.0f ? 0.0f : (ach-rgb.y)/ach_shd;
+  dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
 
   // compress distance with user controlled parameterized shaper function
   float3 cdist = make_float3(
@@ -222,9 +222,9 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     ach-cdist.y*ach_shd,
     ach-cdist.z*ach_shd);
 
-    crgb.r = isnan(crgb.r) ? 0.0f : crgb.r;
-    crgb.g = isnan(crgb.g) ? 0.0f : crgb.g;
-    crgb.b = isnan(crgb.b) ? 0.0f : crgb.b;
+    crgb.x = isnan(crgb.x) ? 0.0f : crgb.x;
+    crgb.y = isnan(crgb.y) ? 0.0f : crgb.y;
+    crgb.z = isnan(crgb.z) ? 0.0f : crgb.z;
 
   if (working_colorspace == acescct) {
     crgb.x = lin_to_acescct(crgb.x);
