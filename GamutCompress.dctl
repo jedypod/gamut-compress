@@ -85,7 +85,7 @@ __DEVICE__ float bisect(float k, float thr, int method) {
   }
   c = (a+b)/2.0f;
   y = f(c, k, thr, method);
-  if (y == 0.0f) {
+  if (y <= tol) {
     return c; // lucky guess
   }
   int n = 1;
@@ -205,9 +205,9 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
 
   // distance from the achromatic axis for each color component aka inverse rgb ratios
   float3 dist;
-  dist.x = (ach-rgb.x)/ach;
-  dist.y = (ach-rgb.y)/ach;
-  dist.z = (ach-rgb.z)/ach;
+  dist.x = (ach-rgb.x)/ach_shd;
+  dist.y = (ach-rgb.y)/ach_shd;
+  dist.z = (ach-rgb.z)/ach_shd;
 
   // compress distance with user controlled parameterized shaper function
   float3 cdist = make_float3(
@@ -218,9 +218,9 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   // recalculate rgb from compressed distance and achromatic
   // effectively this scales each color component relative to achromatic axis by the compressed distance
   float3 crgb = make_float3(
-    ach-cdist.x*ach,
-    ach-cdist.y*ach,
-    ach-cdist.z*ach);
+    ach-cdist.x*ach_shd,
+    ach-cdist.y*ach_shd,
+    ach-cdist.z*ach_shd);
 
     crgb.r = isnan(crgb.r) ? 0.0f : crgb.r;
     crgb.g = isnan(crgb.g) ? 0.0f : crgb.g;
