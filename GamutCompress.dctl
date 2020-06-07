@@ -1,9 +1,9 @@
-DEFINE_UI_PARAMS(cmethod, method, DCTLUI_COMBO_BOX, 4, {L, R, E, A, T}, {log, reinhard, exp, arctan, tanh});
+DEFINE_UI_PARAMS(cmethod, method, DCTLUI_COMBO_BOX, 0, {L, R, E, A, T}, {log, reinhard, exp, arctan, tanh});
 DEFINE_UI_PARAMS(threshold, threshold, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.4f, 0.0f);
 DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1f, 0.0f);
-DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.25f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescg}, {acescct, acescg});
 DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
 
