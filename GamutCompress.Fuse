@@ -1,0 +1,403 @@
+--[[--
+-----------------------------
+
+Gamut Compress is a tool to compress out of gamut colors back into gamut.
+Written by Jed Smith with lots of help from the ACES Gamut Mapping Virtual Working Group
+https://github.com/jedypod/gamut-compress
+https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective
+https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group
+
+Initial version of this Fuse written by Jacob Danell. Thank you! :D
+
+
+------------------
+Documenation
+
+Method
+Specify the tone compression curve to use when mapping out of gamut colors into the boundary threshold.
+Example plots:
+log      https://www.desmos.com/calculator/hmzirlw7tj
+reinhard https://www.desmos.com/calculator/lkhdtjbodx
+exp      https://www.desmos.com/calculator/s2adnicmmr
+atan     https://www.desmos.com/calculator/h96qmnozpo
+tanh     https://www.desmos.com/calculator/xiwliws24x
+
+These curves are sorted by slope. Log is less steep and doesnt get as flat, 
+which results in more desaturation in compressed colors at the same threshold. 
+Tanh is more steep and gets flatter soonerwhich causes colors to be more saturated 
+at the same threshold. You may need to boost the threshold to get 
+the desired color appearance with tanh.
+
+Threshold
+Percentage of the gamut to affect. 
+If threshold is 0.2, the inner 80% of the gamut will be unaffected 
+and out of gamut values will be compressed into the outer 20% of the gamuts color volume.
+
+Shadow Rolloff
+Reduce gamut compression in dark areas below specified value.
+Helps reduce invertability issues in negative values from grain.
+
+Max Distance
+Per color component control to specify what distance will be compressed to the gamut boundary. 
+For example, a value of cyan=0.2 will map colors with a distance of 
+red=1.2 from the achromatic axis to red=1.0, which is the gamut boundary.
+
+Direction
+Specifies whether to apply or inverse the gamut compression operation.
+
+
+-------------------------
+Installation
+
+To install this fuse for Blackmagic Fusion Studio, copy the file to your UserData Path Map folder:
+
+Linux:
+  ~/.fusion/BlackmagicDesign/Fusion/Fuses
+OSX: 
+  ~/Library/Application Support/Blackmagic Design/Fusion
+Windows:
+  %appdata%\Blackmagic Design\Fusion\Fuses
+
+
+For the Fusion page in Resolve Lite or Resolve Studio use these UserData folders:
+
+Linux: 
+  ~/.local/share/DaVinciResolve/Fusion/Fuses
+OSX:
+  ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion
+Windows:
+  %appdata%\Blackmagic Design\DaVinci Resolve\Fusion\Fuses
+
+
+--]]--
+
+
+FuRegisterClass("GamutCompress", CT_Tool, {
+    REGS_Name = "Gamut Compress",
+    REGS_Category = "Color",
+    REGS_OpIconString = "",
+    REGS_OpDescription = "Compress out of gamut colors back into gamut.",
+    REG_Fuse_NoEdit = false,
+    REG_Fuse_NoReload = false,
+    REG_SupportsDoD = false,
+})
+
+
+function Create()
+    InMethod = self:AddInput("method", "method", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "ComboControl",
+        INP_Default = 0.0,
+        INP_Integer = true,
+        {CCS_AddString = "log", },
+        {CCS_AddString = "reinhard", },
+        {CCS_AddString = "exp", },
+        {CCS_AddString = "atan", },
+        {CCS_AddString = "tanh", },
+    })
+    
+    InThreshold = self:AddInput("threshold", "threshold", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_Default = 0.2,
+        INP_MinAllowed = 0.0,
+        INP_MaxScale = 0.4,
+    })
+    
+    InRolloff = self:AddInput("shd rolloff", "shd rolloff", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_Default = 0.03,
+        INP_MinAllowed = 0.0,
+        INP_MaxScale = 0.1,
+    })
+    
+    self:BeginControlNest("distance limits", "distance limits", true, {})
+    
+    InCyan = self:AddInput("cyan", "cyan", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_Default = 0.09,
+        INP_MinAllowed = 0,
+        INP_MaxScale = 1,
+    })
+    
+    InMagenta = self:AddInput("magenta", "magenta", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_Default = 0.24,
+        INP_MinAllowed = 0,
+        INP_MaxScale = 1,
+    })
+    
+    InYellow = self:AddInput("yellow", "yellow", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_Default = 0.12,
+        INP_MinAllowed = 0,
+        INP_MaxScale = 1,
+    })
+    
+    self:EndControlNest()
+    
+    InInvert = self:AddInput("Invert", "Invert", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "CheckboxControl",
+        INP_MinAllowed = 0.0,
+        INP_MaxAllowed = 1.0,
+        INP_Default = 0.0,
+    })
+
+    InImage = self:AddInput("Input", "Input", {
+        LINKID_DataType = "Image",
+        LINK_Main = 1,
+    })
+
+    OutImage = self:AddOutput("Output", "Output", {
+       LINKID_DataType = "Image",
+       LINK_Main = 1,
+    })
+end
+
+
+function Process(req)
+    local src = InImage:GetValue(req)
+    local dst = Image{ IMG_Like = src, IMG_DeferAlloc = true }
+
+    if not req:IsPreCalc() then
+        local node = DVIPComputeNode(req, "SolidKernel", SolidKernel, "SolidParams", SolidParams)
+        local params = node:GetParamBlock(SolidParams)
+
+        params.cmethod = InMethod:GetValue(req).Value
+        params.threshold = InThreshold:GetValue(req).Value
+        params.shd_rolloff = InRolloff:GetValue(req).Value
+        params.cyan = InCyan:GetValue(req).Value
+        params.magenta = InMagenta:GetValue(req).Value
+        params.yellow = InYellow:GetValue(req).Value
+        params.invert = InInvert:GetValue(req).Value
+        params.srcCompOrder = src:IsMask() and 1 or 15
+     
+        node:SetParamBlock(params)
+     
+        node:AddInput("src", src)
+        node:AddOutput("dst", dst)
+     
+        local ok = node:RunSession(req)
+     
+        if not ok then
+            dst = nil
+        end
+
+    end
+ 
+    OutImage:Set(req, dst)
+end
+
+
+SolidParams = [[
+    int cmethod;
+    float threshold;
+    float shd_rolloff;
+    float cyan;
+    float magenta;
+    float yellow;
+    int invert;
+    int srcCompOrder;
+]]
+
+ 
+SolidKernel = [[
+    __CONSTANT__ float pi = 3.14159265359f;
+
+    // compression function which gives the y=1 x intersect at y=0
+    __DEVICE__ float f(float x, float k, float thr, int method) {
+      if (method == 0) {
+        // natural logarithm compression method
+        return (_expf((1.0f-thr+thr*log(1.0f-x)-x*thr*log(1.0f-x))/(thr*(1.0f-x))))*thr+x*thr-k;
+      } else if (method == 1) {
+        return k;
+      } else if (method == 2) {
+        // natural exponent compression method
+        return -_logf((-x+1.0f)/(thr-x))*(-thr+x)+thr-k;
+      } else if (method == 3) {
+        // arctangent compression method
+        return (2.0f*_tanf( (pi*(1.0f-thr))/(2.0f*(x-thr)))*(x-thr))/pi+thr-k;
+      } else if (method == 4) {
+        // hyperbolic tangent compression method
+        return _atanhf((1.0f-thr)/(x-thr))*(x-thr)+thr-k;
+      }
+      return 0;
+    }
+
+    __DEVICE__ int sign(float x) {
+        return x == 0.0f ? 0 : x > 0.0f ? 1 : 0;
+      }
+
+    __DEVICE__ float bisect(float k, float thr, int method) {
+      // use a simple bisection algorithm to bruteforce the root of f
+      // returns an approximation of the value of limit 
+      // such that the compression function intersects y=1 at desired value k
+      // this allows us to specify the max distance we will compress to the gamut boundary
+      
+      float a, b, c, y;
+      float tol = 0.0001; // accuracy of estimate
+      int nmax = 100; // max iterations
+
+      // set up reasonable initial guesses for each method given output ranges of each function
+      if (method == 0) {
+        // natural logarithm needs a limit between -inf (linear), and 1 (clip)
+        a = -15.0f;
+        b = 0.98f;
+      } else if (method == 4) {
+        // tanh needs more precision
+        a = 1.000001f;
+        b = 5.0f;
+      } else {
+        a = 1.0001f;
+        b = 5.0f;
+      }
+
+      if (sign(f(a, k, thr, method)) == sign(f(b, k, thr, method))) {
+        // bad estimate. return something close to linear
+        if ((method == 0) || (method == 2)) {
+          return -100.0f;
+        } else {
+          return 1.999999f;
+        }
+      }
+      c = (a+b)/2.0f;
+      y = f(c, k, thr, method);
+      if (_fabs(y) <= tol) {
+        return c; // lucky guess
+      }
+      int n = 1;
+      while ((_fabs(y) > tol) && (n <= nmax)) {
+        if (sign(y) == sign(f(a, k, thr, method))) {
+          a = c;
+        } else {
+          b = c;
+        }
+        c = (a+b)/2.0f;
+        y = f(c, k, thr, method);
+        n += 1;
+      }
+      return c;
+    }
+
+    // calculate compressed distance
+    __DEVICE__ float compress(float dist, float lim, float thr, bool invert, int method) {
+      float cdist;
+      if (dist < thr) {
+        cdist = dist;
+      } else {
+        if (method == 0) {
+          // natural logarithm compression method: https://www.desmos.com/calculator/hmzirlw7tj
+          // inspired by ITU-R BT.2446 http://www.itu.int/pub/R-REP-BT.2446-2019
+          if (invert == 0) {
+            cdist = thr*log(dist/thr-lim)-lim*thr*log(dist/thr-lim)+thr-thr*log(1.0f-lim)+lim*thr*log(1.0f-lim);
+          } else {
+            cdist = _expf((dist-thr+thr*log(1.0f-lim)-lim*thr*log(1.0f-lim))/(thr*(1.0f-lim)))*thr+lim*thr;
+          }
+        } else if (method == 1) {
+          // simple Reinhard type compression method: https://www.desmos.com/calculator/lkhdtjbodx
+          if (invert == 0) {
+            cdist = thr + 1.0f/(1.0f/(dist - thr) + 1.0f/(1.0f - thr) - 1.0f/(lim - thr));
+          } else {
+            cdist = thr + 1.0f/(1.0f/(dist - thr) - 1.0f/(1.0f - thr) + 1.0f/(lim - thr));
+          }
+        } else if (method == 2) {
+          // natural exponent compression method: https://www.desmos.com/calculator/s2adnicmmr
+          if (invert == 0) {
+            cdist = lim-(lim-thr)*_expf(-(((dist-thr)*((1.0f*lim)/(lim-thr))/lim)));
+          } else {
+            cdist = -log((dist-lim)/(thr-lim))*(-thr+lim)/1.0f+thr;
+          }
+        } else if (method == 3) {
+          // arctangent compression method: plot https://www.desmos.com/calculator/olmjgev3sl
+          if (invert == 0) {
+            cdist = thr + (lim - thr) * 2.0f / pi * _atan2f(pi/2.0f * (dist - thr)/(lim - thr), 1.0f);
+          } else {
+            cdist = thr + (lim - thr) * 2.0f / pi * _tanf(pi/2.0f * (dist - thr)/(lim - thr));
+          }
+        } else if (method == 4) {
+          // hyperbolic tangent compression method: https://www.desmos.com/calculator/xiwliws24x
+          if (invert == 0) {
+            cdist = thr + (lim - thr) * _tanhf( ( (dist - thr)/( lim - thr)));
+          } else {
+            cdist = thr + (lim - thr) * _atanhf( dist/( lim - thr) - thr/( lim - thr));
+          }
+        }
+      }
+      return cdist;
+    }
+
+    __KERNEL__ void SolidKernel(__CONSTANTREF__ SolidParams *params, __TEXTURE2D__ src, __TEXTURE2D_WRITE__ dst)
+    {
+        DEFINE_KERNEL_ITERATORS_XY(x, y);
+        float4 rgb = _tex2DVecN(src, x, y, params->srcCompOrder);
+
+        // set up method
+        int method;
+        if (params->cmethod == 0) {
+            method = 0;
+        } else if (params->cmethod == 1) {
+            method = 1;
+        } else if (params->cmethod == 2) {
+            method = 2;
+        } else if (params->cmethod == 3) {
+            method = 3;
+        } else if (params->cmethod == 4) {
+            method = 4;
+        }
+
+        // thr is the percentage of the core gamut to protect: the complement of threshold.
+      float thr = 1.0f - params->threshold;
+      
+      // lim is the max distance from the gamut boundary that will be compressed
+      // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
+      // if method is Reinhard, use the limit as-is
+      float3 lim;
+      if (method == 1) {
+        lim = make_float3(params->cyan+1.0f, params->magenta+1.0f, params->yellow+1.0f);
+      } else {
+        // otherwise, we have to bruteforce the value of limit 
+        // such that lim is the value of x where y=1 - also enforce sane ranges to avoid nans
+
+        // Not sure of a way to pre-calculate a constant using the values from the ui parameters in Resolve DCTL...
+        // This approach might have performance implications
+        lim = make_float3(
+          bisect(_fmaxf(0.0001f, params->cyan)+1.0f, thr, method),
+          bisect(_fmaxf(0.0001f, params->magenta)+1.0f, thr, method),
+          bisect(_fmaxf(0.0001f, params->yellow)+1.0f, thr, method));
+      }
+
+      // achromatic axis 
+      float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
+
+      // achromatic with shadow rolloff below shd_rolloff threshold
+      float ach_shd = 1-( (1-ach)<(1-params->shd_rolloff)?(1-ach):(1-params->shd_rolloff)+params->shd_rolloff*_tanhf((((1-ach)-(1-params->shd_rolloff))/params->shd_rolloff)));
+
+      // distance from the achromatic axis for each color component aka inverse rgb ratios
+      float3 dist;
+      dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
+      dist.y = ach_shd == 0.0f ? 0.0f : (ach-rgb.y)/ach_shd;
+      dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
+
+      // compress distance with user controlled parameterized shaper function
+      float3 cdist = make_float3(
+        compress(dist.x, lim.x, thr, params->invert, method),
+        compress(dist.y, lim.y, thr, params->invert, method),
+        compress(dist.z, lim.z, thr, params->invert, method));
+
+      // recalculate rgb from compressed distance and achromatic
+      // effectively this scales each color component relative to achromatic axis by the compressed distance
+      float4 crgb = make_float4(
+        ach-cdist.x*ach_shd,
+        ach-cdist.y*ach_shd,
+        ach-cdist.z*ach_shd,
+        rgb.w);
+
+        _tex2DVec4Write(dst, x, y, crgb);
+    }
+]]
+
