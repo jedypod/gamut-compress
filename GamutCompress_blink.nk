@@ -5,27 +5,34 @@ Group {
  label "\[value method] : \[value direction]"
  addUserKnob {20 GamutCompress}
  addUserKnob {4 method t "Choose the type of distance compression function you want to use" M {log reinhard exp atan tanh}}
- addUserKnob {22 reset -STARTLINE T "n = nuke.thisNode()\nknobs = \['threshold', 'cyan', 'magenta', 'yellow']\nfor k in knobs:\n    n\[k].setValue(0.2)\nn\['shd_rolloff'].setValue(0.03)"}
+ addUserKnob {22 reset t "Reset knobs to default values. Distance limits are calculated based on an the average of a selection of digital cinema cameras." -STARTLINE T "n = nuke.thisNode()\nnuke.root().begin()\ndefaults = \{\n    'threshold': 0.2,\n    'shd_rolloff': 0.03,\n    'cyan': 0.09,\n    'magenta':0.24,\n    'yellow': 0.12,\n\}\nfor k, v in defaults.items():\n    n\[k].setValue(v)"}
  addUserKnob {6 use_gpu l "use gpu" t "use gpu for blinkscript node" -STARTLINE}
  use_gpu true
- addUserKnob {7 threshold t "Percentage of the gamut to affect. A value of 0.2 will leave leave the core 80% of the colors within the gamut unaffected." R 0 0.3}
+ addUserKnob {18 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression."}
  threshold 0.2
+ addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {7 shd_rolloff l "shd rolloff" R 0 0.1}
  shd_rolloff 0.03
- addUserKnob {26 distance_limit_label l " " T "<b>distance limit" t "Specifies the distance beyond the gamut boundary to map to the gamut boundary for each color component."}
- addUserKnob {7 cyan t "distance limit for the R component." R 0.001 1}
+ addUserKnob {26 distance_limit_label l " " t "Specifies the distance beyond the gamut boundary to map to the gamut boundary for each color component." T "<b>distance limit"}
+ addUserKnob {7 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." R 0.001 1}
  cyan 0.2
- addUserKnob {7 magenta t "distance limit for the G component." R 0.001 1}
+ addUserKnob {7 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." R 0.001 1}
  magenta 0.2
- addUserKnob {7 yellow t "distance limit for the B component." R 0.001 1}
+ addUserKnob {7 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." R 0.001 1}
  yellow 0.2
+ addUserKnob {26 ""}
+ addUserKnob {26 calculate_distance_limit_label l " " T "<b>calculate distance limit"}
+ addUserKnob {41 gamut t "The current gamut in which we are working." T Gamut.gamut_in}
+ addUserKnob {41 src_gamut l "source gamut" t "The source gamut from which this image was transformed." -STARTLINE T Gamut.gamut_out}
+ addUserKnob {22 calc_max_limit l "Calc Max Distance" t "Calculate the max distance given current gamut and source gamut." T "def get_max(ct_node, ch):\n    max_knob = ct_node\['maxlumapixvalue']\n    ct_node\['maxlumapixdata'].clearAnimated()\n    ct_node\['minlumapixdata'].clearAnimated()\n    ct_node\['minlumapixvalue'].clearAnimated()\n    max_knob.clearAnimated()\n    nuke.execute(ct_node, frame, frame)\n    maxval = max(max_knob.getValue())\n    maxval = round(maxval, 3)\n    kmax = n\[ch]\n    kmax.setValue(max(0, maxval-1))\n    \nn = nuke.thisNode()\nframe = nuke.frame()\n\nct_nodes = \[nuke.toNode('\{0\}.\{1\}MAX'.format(n.fullName(), c)) for c in \['R', 'G', 'B']]\nlimits = \['cyan', 'magenta', 'yellow']\n\nfor i, ct_node in enumerate(ct_nodes):\n    get_max(ct_node, limits\[i])" +STARTLINE}
+ addUserKnob {6 use_input_image l "use input image" t "Use the input image to calculate the max distance instead of the specified gamuts." -STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {4 direction M {forward inverse}}
  addUserKnob {20 info_tab l Info}
  addUserKnob {26 info_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>GamutCompress</b><br>\nmaps out of gamut colors back into gamut.\n<br><br><a href=https://github.com/jedypod/gamut-compress>Documentation</a>"}
  addUserKnob {20 doc_grp l "" +STARTLINE n 1}
  doc_grp 0
- addUserKnob {26 doc_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>Method</b><br>\nSpecify the tone compression curve to use when <br>\nmapping out of gamut colors into the boundary threshold.<br>\n<a href=https://www.desmos.com/calculator/hmzirlw7tj>log</a>\n<a href=https://www.desmos.com/calculator/lkhdtjbodx>reinhard</a>\n<a href=https://www.desmos.com/calculator/s2adnicmmr>exp</a>\n<a href=https://www.desmos.com/calculator/h96qmnozpo>atan</a>\n<a href=https://www.desmos.com/calculator/xiwliws24x>tanh</a>\n<br><br>\n\n<b>Threshold</b><br>\nPercentage of the gamut to affect. If threshold is 0.2, <br>\nthe inner 80% of the gamut will be unaffected and <br>\nout of gamut values will be compressed into <br>\nthe outer 20% of the gamut's color volume.<br><br>\n\n<b>Shadow Rolloff</b><br>\nReduce gamut compression effect in grain below specified value.<br><br>\n\n<b>Max Distance</b><br>\nPer color component control to specify what distance will be <br>\ncompressed to the gamut boundary. For example, <br>\na value of cyan=0.2 will map colors with a distance of red=1.2 from <br>\nthe achromatic axis to red=1.0, which is the gamut boundary.<br><br>\n\n<b>Direction</b><br>\nSpecifies whether to apply or inverse the gamut compression operation.<br><br>"}
+ addUserKnob {26 doc_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>Method</b><br>\nSpecify the tone compression curve to use when <br>\nmapping out of gamut colors into the boundary threshold.<br>\n<a href=https://www.desmos.com/calculator/hmzirlw7tj>log</a>\n<a href=https://www.desmos.com/calculator/lkhdtjbodx>reinhard</a>\n<a href=https://www.desmos.com/calculator/s2adnicmmr>exp</a>\n<a href=https://www.desmos.com/calculator/h96qmnozpo>atan</a>\n<a href=https://www.desmos.com/calculator/xiwliws24x>tanh</a>\n<br><br>\nThese curves are sorted by slope. Log is less steep and doesn't get as flat,<br>\nwhich results in more desaturation in compressed colors <br>\nat the same threshold. Tanh is more steep and gets flatter sooner<br>\nwhich causes colors to be more saturated at the same threshold. <br>\nYou may need to boost the threshold to get the desired color appearance with tanh.<br><br>\n\n<b>Threshold</b><br>\nPercentage of the gamut to affect. If threshold is 0.2, <br>\nthe inner 80% of the gamut will be unaffected and <br>\nout of gamut values will be compressed into <br>\nthe outer 20% of the gamut's color volume.<br><br>\n\n<b>Shadow Rolloff</b><br>\nReduce gamut compression in dark areas below specified value.<br>\nHelps reduce invertability issues in negative values from grain.<br><br>\n\n<b>Max Distance</b><br>\nPer color component control to specify what distance will be <br>\ncompressed to the gamut boundary. For example, <br>\na value of cyan=0.2 will map colors with a distance of red=1.2 from <br>\nthe achromatic axis to red=1.0, which is the gamut boundary.<br><br>\n\n<b>Calculate Max Distance</b><br>\nA helper to calculate the max distance that might occur when <br>\nmapping from a particular source color gamut. For example <br>\nwhen mapping from AlexaWideGamut to ACEScg, the max distance<br>\nof magenta will be highest and the other two components will be lower.<br>\nSetting these distance values according to the likely distances in the <br>\nsource gamut helps avoid unwanted shifts in color. The default is set to<br>\na good average among many digital cinema camera gamuts, but you may<br>\nwant to tweak these values for your needs.<br><br>\n<b>Direction</b><br>\nSpecifies whether to apply or inverse the gamut compression operation.<br><br>"}
  addUserKnob {20 endGroup n -1}
  addUserKnob {26 about_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\nWritten by <a href=https://github.com/jedypod color=red>Jed Smith</a> with <a href=https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective>help</a> from the <a href=https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group>ACES Gamut Mapping VWG</a>"}
 }
@@ -33,21 +40,380 @@ Group {
   inputs 0
   name Input
   xpos -40
-  ypos -10
+  ypos -58
  }
  AddChannels {
   name AddChannels
-  note_font Helvetica
   xpos -40
-  ypos 26
+  ypos 34
  }
+set N1e1aa4a0 [stack 0]
+ Group {
+  inputs 0
+  name RGB
+  xpos 180
+  ypos -58
+ }
+  Constant {
+   inputs 0
+   color {0 0 0 0}
+   format "4 1 0 0 4 1 1 rgbw"
+   name Constant3
+   note_font "Bitstream Vera Sans"
+   xpos 510
+   ypos -34
+   postage_stamp false
+  }
+  Reformat {
+   type "to box"
+   box_width 3
+   box_height 2
+   box_fixed true
+   name Reformat1
+   xpos 510
+   ypos -10
+  }
+  Rectangle {
+   area {0 0 1 2}
+   color {1 0 0 0}
+   name Rectangle1
+   note_font "Bitstream Vera Sans"
+   xpos 510
+   ypos 14
+  }
+  Rectangle {
+   area {1 0 2 2}
+   color {0 1 0 0}
+   name Rectangle2
+   note_font "Bitstream Vera Sans"
+   xpos 510
+   ypos 38
+  }
+  Rectangle {
+   area {2 0 3 2}
+   color {0 0 1 0}
+   name Rectangle3
+   note_font "Bitstream Vera Sans"
+   xpos 510
+   ypos 62
+  }
+  Output {
+   name Output
+   xpos 510
+   ypos 110
+  }
+ end_group
+ Group {
+  name Gamut
+  xpos 180
+  ypos -10
+  addUserKnob {20 GamutToXYZ_tab l GamutToXYZ}
+  addUserKnob {4 gamut_in l "gamut in" t "Choose source gamut" M {ACES ACEScg "Filmlight E-Gamut" Rec709 Rec2020 P3D60 P3D65 "Arri AlexaWideGamut" REDWideGamutRGB "GoPro Protune Native" CanonCinemaGamut SonySGamut SonySGamut3Cine PanasonicVGamut "DJI D-Gamut" BMDWideGamutGen4 AdobeWideGamutRGB ProPhotoRGB}}
+  gamut_in ACEScg
+  addUserKnob {4 gamut_out l "gamut out" t "Choose destination gamut" M {ACES ACEScg "Filmlight E-Gamut" Rec709 Rec2020 P3D60 P3D65 "Arri AlexaWideGamut" REDWideGamutRGB "GoPro Protune Native" CanonCinemaGamut SonySGamut SonySGamut3Cine PanasonicVGamut "DJI D-Gamut" BMDWideGamutGen4 AdobeWideGamutRGB ProPhotoRGB}}
+  gamut_out "Arri AlexaWideGamut"
+  addUserKnob {6 invert +STARTLINE}
+  invert true
+ }
+  Input {
+   inputs 0
+   name Input
+   xpos -40
+   ypos -130
+  }
+  Dot {
+   name Dot1
+   xpos -6
+   ypos -78
+  }
+set N6bfcee0 [stack 0]
+  ColorMatrix {
+   matrix {
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+     }
+   name ColorMatrix2
+   label "RGB to XYZ"
+   xpos 180
+   ypos 32
+   addUserKnob {20 Gamut}
+   addUserKnob {3 which}
+   which {{parent.gamut_out}}
+   addUserKnob {12 rxy}
+   rxy {{parent.mtx.rxy(which)} {parent.mtx.rxy(which)}}
+   addUserKnob {12 gxy}
+   gxy {{parent.mtx.gxy(which)} {parent.mtx.gxy(which)}}
+   addUserKnob {12 bxy}
+   bxy {{parent.mtx.bxy(which)} {parent.mtx.bxy(which)}}
+   addUserKnob {12 wxy}
+   wxy {{parent.mtx.wxy(which)} {parent.mtx.wxy(which)}}
+  }
+  ColorMatrix {
+   matrix {
+       {0.9872239828 -0.006113247015 0.01595330238}
+       {-0.007598329335 1.001861453 0.005330037326}
+       {0.00307257846 -0.00509596616 1.081680536}
+     }
+   invert {{!parent.ColorMatrix4.invert}}
+   name ColorMatrix1
+   label "CAT: Bradford\n ACES to D65"
+   xpos 180
+   ypos 101
+   disable {{"RGBtoXYZ.wxy == XYZtoRGB.wxy"}}
+  }
+  ColorMatrix {
+   matrix {
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+     }
+   invert true
+   name ColorMatrix3
+   label "XYZ to RGB"
+   xpos 180
+   ypos 176
+   addUserKnob {20 Gamut}
+   addUserKnob {3 which}
+   which {{parent.gamut_in}}
+   addUserKnob {12 rxy}
+   rxy {{parent.mtx.rxy(which)} {parent.mtx.rxy(which)}}
+   addUserKnob {12 gxy}
+   gxy {{parent.mtx.gxy(which)} {parent.mtx.gxy(which)}}
+   addUserKnob {12 bxy}
+   bxy {{parent.mtx.bxy(which)} {parent.mtx.bxy(which)}}
+   addUserKnob {12 wxy}
+   wxy {{parent.mtx.wxy(which)} {parent.mtx.wxy(which)}}
+  }
+push $N6bfcee0
+  ColorMatrix {
+   matrix {
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+     }
+   name RGBtoXYZ
+   xpos -260
+   ypos 38
+   addUserKnob {20 Gamut}
+   addUserKnob {3 which}
+   which {{parent.gamut_in}}
+   addUserKnob {12 rxy}
+   rxy {{parent.mtx.rxy(which)} {parent.mtx.rxy(which)}}
+   addUserKnob {12 gxy}
+   gxy {{parent.mtx.gxy(which)} {parent.mtx.gxy(which)}}
+   addUserKnob {12 bxy}
+   bxy {{parent.mtx.bxy(which)} {parent.mtx.bxy(which)}}
+   addUserKnob {12 wxy}
+   wxy {{parent.mtx.wxy(which)} {parent.mtx.wxy(which)}}
+  }
+  ColorMatrix {
+   matrix {
+       {0.9874471426 -0.005980737507 0.01595583558}
+       {-0.00739388587 1.001675606 0.005319938064}
+       {0.003088310361 -0.005131930113 1.081959367}
+     }
+   invert {{"parent.RGBtoXYZ.wxy == 0.3127"}}
+   name ColorMatrix4
+   label "CAT: Bradford\n D60 to D65"
+   xpos -260
+   ypos 101
+   disable {{"RGBtoXYZ.wxy == XYZtoRGB.wxy"}}
+  }
+  ColorMatrix {
+   matrix {
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+       {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
+     }
+   invert true
+   name XYZtoRGB
+   xpos -260
+   ypos 182
+   addUserKnob {20 Gamut}
+   addUserKnob {3 which}
+   which {{parent.gamut_out}}
+   addUserKnob {12 rxy}
+   rxy {{parent.mtx.rxy(which)} {parent.mtx.rxy(which)}}
+   addUserKnob {12 gxy}
+   gxy {{parent.mtx.gxy(which)} {parent.mtx.gxy(which)}}
+   addUserKnob {12 bxy}
+   bxy {{parent.mtx.bxy(which)} {parent.mtx.bxy(which)}}
+   addUserKnob {12 wxy}
+   wxy {{parent.mtx.wxy(which)} {parent.mtx.wxy(which)}}
+  }
+  Switch {
+   inputs 2
+   which {{parent.invert}}
+   name switch_direction
+   xpos -40
+   ypos 303
+  }
+  Output {
+   name Output
+   xpos -40
+   ypos 374
+  }
+push $N6bfcee0
+  ColorMatrix {
+   matrix {
+       {{curve 0.9525524378 0.6624541879 0.7053968906 0.4123907983 0.6369580626 0.5049495697 0.4865709841 0.6380076408 0.7352752686 0.5022571683 0.7160496712 0.7064827085 0.5990839601 0.6796444654 0.6481720209 0.6065810919 0.7165006995 0.7976718545} {curve 0 0.1340042055 0.1640413404 0.3575843275 0.1446169019 0.2646814585 0.2656676769 0.2147038579 0.06860940903 0.2929667532 0.1296834797 0.1288010478 0.2489254922 0.1522114277 0.1940581352 0.2203479856 0.1010205746 0.1351878047} {curve 9.367863095e-05 0.1561876982 0.08101774752 0.180480808 0.1688809693 0.1830150485 0.1982172877 0.09774444997 0.1465712637 0.1552320272 0.1047228053 0.1151721701 0.1024464965 0.1186000481 0.108225815 0.123526901 0.1467743814 0.03133957833}}
+       {{curve 0.3439664543 0.2722287476 0.2801307142 0.2126390189 0.2627002299 0.237623319 0.2289745659 0.2919537723 0.2866941094 0.1387997568 0.2612613738 0.2709796727 0.2150758505 0.2606855333 0.2830046713 0.2680045366 0.258728236 0.2880405784} {curve 0.7281661034 0.6740817428 0.8202066422 0.7151686549 0.6779980659 0.6891706586 0.6917385459 0.8238410354 0.8429791331 0.910841465 0.8696421385 0.786606431 0.8850684762 0.7748944759 0.8131960034 0.8326833844 0.7246823311 0.7118694782} {curve -0.07213255018 0.05368951708 -0.1003373638 0.07219231874 0.05930171534 0.07320601493 0.07928691059 -0.1157948226 -0.1296732277 -0.04964122549 -0.1309035122 -0.05758608505 -0.1001443192 -0.03558001295 -0.09620071948 -0.1006879359 0.01658944227 8.991353388e-05}}
+       {{curve -3.863927134e-08 -0.005574660841 -0.1037815213 0.01933082007 0 0 0 0.0027982709 -0.07968087494 0.07801423222 -0.009676366113 -0.009677864611 -0.03206583485 -0.009310216643 -0.01825834997 -0.02941203304 -2.906408625e-08 0} {curve 0 0.004060741514 -0.07290724665 0.1191947311 0.0280726999 0.0449459292 0.04511339962 -0.06703422964 -0.3473432064 -0.3148325086 -0.2364816219 0.004600019194 -0.02765839547 -0.004612449091 -0.08316776901 -0.08659287542 0.05121183768 -1.262213711e-08} {curve 1.008825183 1.010339141 1.265746474 0.950532198 1.060985088 0.9638792276 1.043944359 1.153293729 1.51608181 1.325875998 1.335215807 1.094135642 1.148782015 1.102980375 1.190483928 1.205062628 0.7738927603 0.8248898983}}
+     }
+   name mtx
+   label "\n"
+   xpos -40
+   ypos 38
+   addUserKnob {20 Params}
+   addUserKnob {12 rxy}
+   rxy {{curve 0.7347 0.713 0.8 0.64 0.708 0.68 0.68 0.684 0.780308 0.69848046 0.74 0.73 0.766 0.73 0.71 0.7177 0.7347 0.734699} {curve 0.2653 0.293 0.3177 0.33 0.292 0.32 0.32 0.313 0.304253 0.19302645 0.27 0.28 0.275 0.28 0.31 0.3171 0.2653 0.265301}}
+   addUserKnob {12 gxy}
+   gxy {{curve 0 0.165 0.18 0.3 0.17 0.265 0.265 0.221 0.121595 0.32955538 0.17 0.14 0.225 0.165 0.21 0.228 0.1152 0.159597} {curve 1 0.83 0.9 0.6 0.797 0.69 0.69 0.848 1.493994 1.02459662 1.14 0.855 0.8 0.84 0.88 0.8616 0.8264 0.840403}}
+   addUserKnob {12 bxy}
+   bxy {{curve 0.0001 0.128 0.065 0.15 0.131 0.15 0.15 0.0861 0.095612 0.10844263 0.08 0.1 0.089 0.1 0.09 0.1006 0.1566 0.036598} {curve -0.077 0.044 -0.0805 0.06 0.046 0.06 0.06 -0.102 -0.084589 -0.03467857 -0.1 -0.05 -0.087 -0.03 -0.08 -0.082 0.0177 0.000105}}
+   addUserKnob {12 wxy}
+   wxy {{curve 0.32168 0.32168 0.3127 0.3127 0.3127 0.32168 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127 0.3457 0.345704} {curve 0.33767 0.33767 0.329 0.329 0.329 0.33767 0.329 0.329 0.329 0.329 0.329 0.329 0.329 0.329 0.329 0.329 0.3585 0.35854}}
+  }
+ end_group
+ Switch {
+  inputs 2
+  which {{parent.use_input_image}}
+  name Switch_distance_source
+  xpos 180
+  ypos 39
+ }
+ Group {
+  name ColorDistance
+  xpos 180
+  ypos 86
+  addUserKnob {20 ColorDistance}
+  addUserKnob {7 shd_rolloff l "shd rolloff" R 0 0.1}
+  shd_rolloff {{parent.shd_rolloff}}
+ }
+  Input {
+   inputs 0
+   name Input
+   xpos -40
+   ypos -274
+  }
+  Dot {
+   name Dot5
+   xpos -6
+   ypos -222
+  }
+set N188d7430 [stack 0]
+  Dot {
+   name Dot1
+   xpos -116
+   ypos -222
+  }
+  Expression {
+   channel0 {rgba.red rgba.green rgba.blue none}
+   expr0 max(r,g,b)
+   name achromatic
+   xpos -150
+   ypos -177
+  }
+set Ncbf3de10 [stack 0]
+push $N188d7430
+  Merge2 {
+   inputs 2
+   operation minus
+   bbox B
+   Achannels rgb
+   Bchannels rgb
+   output rgb
+   name Merge2
+   xpos -40
+   ypos -177
+  }
+push $Ncbf3de10
+  Expression {
+   temp_name0 c_r
+   temp_expr0 1-r
+   temp_name1 c_g
+   temp_expr1 1-g
+   temp_name2 c_b
+   temp_expr2 1-b
+   expr0 1-(c_r<(1-thr)?c_r:(1-thr)+thr*tanh(((c_r-(1-thr))/thr)))
+   expr1 1-(c_g<(1-thr)?c_g:(1-thr)+thr*tanh(((c_g-(1-thr))/thr)))
+   expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
+   name toe
+   xpos -150
+   ypos -129
+   disable {{parent.shd_rolloff==0}}
+   addUserKnob {20 Params_tab l Params}
+   addUserKnob {7 thr t "complement of threshold"}
+   thr {{parent.shd_rolloff}}
+  }
+  Merge2 {
+   inputs 2
+   operation divide
+   bbox B
+   Achannels rgb
+   Bchannels rgb
+   output rgb
+   name Merge3
+   xpos -40
+   ypos -129
+  }
+  Output {
+   name Output
+   xpos -40
+   ypos -58
+  }
+ end_group
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {rgba.red -rgba.green -rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve} {curve}}
+  maxlumapixvalue {{curve} {curve} 0}
+  minlumapixdata {{curve} {curve}}
+  minlumapixvalue {{curve} {curve} 0}
+  name RMAX
+  tile_color 0x84000000
+  xpos 180
+  ypos 135
+ }
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {-rgba.red rgba.green -rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve x5 2} {curve x5 0}}
+  maxlumapixvalue {{curve x5 0} {curve x5 1.218766689} 0}
+  minlumapixdata {{curve x5 1} {curve x5 0}}
+  minlumapixvalue {{curve x5 0} {curve x5 0} 0}
+  name GMAX
+  tile_color 0x84000000
+  xpos 180
+  ypos 159
+ }
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {-rgba.red -rgba.green rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve x5 1} {curve x5 0}}
+  maxlumapixvalue {{curve x5 0} {curve x5 0} 1.052656531}
+  minlumapixdata {{curve x5 2} {curve x5 0}}
+  minlumapixvalue {{curve x5 0} {curve x5 0} 0}
+  name BMAX
+  tile_color 0x84000000
+  xpos 180
+  ypos 183
+ }
+push $N1e1aa4a0
  BlinkScript {
   ProgramGroup 1
-  KernelDescription "2 \"GamutCompression\" iterate pixelWise 264cf350509fbbef2d0cead2101966da04d4909c46d4db5d512b02f29fdb6de8 2 \"src\" Read Point \"dst\" Write Point 7 \"threshold\" Float 1 AAAAAA== \"shd_rolloff\" Float 1 AAAAAA== \"cyan\" Float 1 AAAAAA== \"magenta\" Float 1 AAAAAA== \"yellow\" Float 1 AAAAAA== \"method\" Int 1 AAAAAA== \"invert\" Bool 1 AA== 7 \"threshold\" 1 1 \"shd_rolloff\" 1 1 \"cyan\" 1 1 \"magenta\" 1 1 \"yellow\" 1 1 \"method\" 1 1 \"invert\" 1 1 3 \"thr\" Float 1 1 AAAAAA== \"lim\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA== \"pi\" Float 1 1 AAAAAA=="
-  kernelSource "kernel GamutCompression : public ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float threshold;\n    float shd_rolloff;\n    float cyan;\n    float magenta;\n    float yellow;\n    int method;\n    bool invert;\n\n\n  local:\n  float thr;\n  float3 lim;\n  float pi;\n\n  void init() \{\n    pi = 3.14159265359;\n\n    // thr is the percentage of the core gamut to protect: the complement of threshold.\n    thr = 1 - threshold;\n\n    // lim is the max distance from the gamut boundary that will be compressed\n    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary\n    // if method is Reinhard, use the limit as-is\n    if (method == 1) \{\n      lim = float3(cyan+1, magenta+1, yellow+1);\n    \} else \{\n      // otherwise, we have to bruteforce the value of limit \n      // such that lim is the value of x where y=1\n      // importantly, this runs once at the beginning of evaluation, NOT per-pixel!!!\n      lim = float3(\n        bisect(max(0.0001, cyan)+1),\n        bisect(max(0.0001, magenta)+1),\n        bisect(max(0.0001, yellow)+1));\n    \}\n  \}\n\n  // calculate hyperbolic tangent\n  float tanh( float in) \{\n    float f = exp(2.0f*in);\n    return (f-1.0f) / (f+1.0f);\n  \}\n\n  // calculate inverse hyperbolic tangent\n  float atanh( float in) \{\n    return log((1.0f+in)/(1.0f-in))/2.0f;\n  \}\n\n  // compression function which gives the y=1 x intersect at y=0\n  float f(float x, float k) \{\n    if (method == 0) \{\n      // natural logarithm compression method\n      return (exp((1-thr+thr*log(1-x)-x*thr*log(1-x))/(thr*(1-x))))*thr+x*thr-k;\n    \} else if (method == 1) \{\n      return k;\n    \} else if (method == 2) \{ \n      // natural exponent compression method\n      return -log((-x+1)/(thr-x))*(-thr+x)+thr-k;\n    \} else if (method == 3) \{\n      // arctangent compression method\n      return (2*tan( (pi*(1-thr))/(2*(x-thr)))*(x-thr))/pi+thr-k;\n    \} else if (method == 4) \{\n      // hyperbolic tangent compression method\n      return atanh((1-thr)/(x-thr))*(x-thr)+thr-k;\n    \}\n  \}\n\n  int sign(float x) \{\n    return x == 0 ? 0 : x > 0 ? 1 : 0;\n  \}\n\n  float bisect(float k) \{\n    // use a simple bisection algorithm to bruteforce the root of f\n    // returns an approximation of the value of limit \n    // such that the compression function intersects y=1 at desired value k\n    // this allows us to specify the max distance we will compress to the gamut boundary\n    \n    float a, b, c, y;\n    float tol = 0.0001; // accuracy of estimate\n    int nmax = 100; // max iterations\n\n    // set up reasonable initial guesses for each method given output ranges of each function\n    if (method == 0) \{\n      // natural logarithm needs a limit between -inf (linear), and 1 (clip)\n      a = -15;\n      b = 0.98;\n    \} else if (method == 4) \{\n      // tanh needs more precision\n      a = 1.000001;\n      b = 5;\n    \} else \{\n      a = 1.0001;\n      b = 5;\n    \}\n\n    if (sign(f(a, k)) == sign(f(b, k))) \{\n      // bad estimate. return something close to linear\n      if ((method == 0) || (method == 2)) \{\n        return -100;\n      \} else \{\n        return 1.999999;\n      \}\n    \}\n    c = (a+b)/2;\n    y = f(c, k);\n    if (y == 0) \{\n      return c; // lucky guess\n    \}\n\n    int n = 1;\n    while ((fabs(y) > tol) && (n <= nmax)) \{\n      if (sign(y) == sign(f(a, k))) \{\n        a = c;\n      \} else \{\n        b = c;\n      \}\n      c = (a+b)/2;\n      y = f(c, k);\n      n += 1;\n    \}\n    return c;\n  \}\n\n\n  // calculate compressed distance\n  float compress(float dist, float lim) \{\n    float cdist;\n    if (dist < thr) \{\n      cdist = dist;\n    \} else \{\n      if (method == 0) \{\n        // natural logarithm compression method: https://www.desmos.com/calculator/hmzirlw7tj\n        // inspired by ITU-R BT.2446 http://www.itu.int/pub/R-REP-BT.2446-2019\n        if (invert == 0) \{\n          cdist = thr*log(dist/thr-lim)-lim*thr*log(dist/thr-lim)+thr-thr*log(1-lim)+lim*thr*log(1-lim);\n        \} else \{\n          cdist = exp((dist-thr+thr*log(1-lim)-lim*thr*log(1-lim))/(thr*(1-lim)))*thr+lim*thr;\n        \}\n      \} else if (method == 1) \{\n        // simple Reinhard type compression method: https://www.desmos.com/calculator/lkhdtjbodx\n        if (invert == 0) \{\n          cdist = thr + 1/(1/(dist - thr) + 1/(1 - thr) - 1/(lim - thr));\n        \} else \{\n          cdist = thr + 1/(1/(dist - thr) - 1/(1 - thr) + 1/(lim - thr));\n        \}\n      \} else if (method == 2) \{\n        // natural exponent compression method: https://www.desmos.com/calculator/s2adnicmmr\n        if (invert == 0) \{\n          cdist = lim-(lim-thr)*exp(-(((dist-thr)*((1*lim)/(lim-thr))/lim)));\n        \} else \{\n          cdist = -log((dist-lim)/(thr-lim))*(-thr+lim)/1+thr;\n        \}\n      \} else if (method == 3) \{\n        // arctangent compression method: https://www.desmos.com/calculator/h96qmnozpo\n        if (invert == 0) \{\n          cdist = thr + (lim - thr) * 2 / pi * atan(pi/2 * (dist - thr)/(lim - thr));\n        \} else \{\n          cdist = thr + (lim - thr) * 2 / pi * tan(pi/2 * (dist - thr)/(lim - thr));\n        \}\n      \} else if (method == 4) \{\n        // hyperbolic tangent compression method: https://www.desmos.com/calculator/xiwliws24x\n        if (invert == 0) \{\n          cdist = thr + (lim - thr) * tanh( ( (dist - thr)/( lim - thr)));\n        \} else \{\n          cdist = thr + (lim - thr) * atanh( dist/( lim - thr) - thr/( lim - thr));\n        \}\n      \}\n    \}\n    return cdist;\n  \}\n\n\n  void process() \{\n    // source pixels\n    SampleType(src) rgba = src();\n    float3 rgb = float3(rgba.x, rgba.y, rgba.z);\n\n    // achromatic axis \n    float ach = max(rgb.x, max(rgb.y, rgb.z));\n\n    // achromatic with shadow rolloff below shd_rolloff threshold\n    float ach_shd = 1-( (1-ach)<(1-shd_rolloff)?(1-ach):(1-shd_rolloff)+shd_rolloff*tanh((((1-ach)-(1-shd_rolloff))/shd_rolloff)));\n\n    // distance from the achromatic axis for each color component aka inverse rgb ratios\n    // distance is normalized by achromatic, so that 1.0 is at gamut boundary, avoid 0 div\n    float3 dist = ach_shd == 0 ? float3(0, 0, 0) : (ach-rgb)/ach_shd;\n\n    // compress distance with user controlled parameterized shaper function\n    float3 cdist = float3(\n      compress(dist.x, lim.x),\n      compress(dist.y, lim.y),\n      compress(dist.z, lim.z));\n\n    // recalculate rgb from compressed distance and achromatic\n    // effectively this scales each color component relative to achromatic axis by the compressed distance\n    float3 crgb = ach-cdist*ach_shd;\n\n    // write to output\n    dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);\n  \}\n\};"
+  KernelDescription "2 \"GamutCompression\" iterate pixelWise 2def474ce90b837c05ea79bde1d62a6e108657dc3a3b5bc68d909c6240a8388b 2 \"src\" Read Point \"dst\" Write Point 7 \"threshold\" Float 3 AAAAAAAAAAAAAAAAAAAAAA== \"shd_rolloff\" Float 1 AAAAAA== \"cyan\" Float 1 AAAAAA== \"magenta\" Float 1 AAAAAA== \"yellow\" Float 1 AAAAAA== \"method\" Int 1 AAAAAA== \"invert\" Bool 1 AA== 7 \"threshold\" 3 1 \"shd_rolloff\" 1 1 \"cyan\" 1 1 \"magenta\" 1 1 \"yellow\" 1 1 \"method\" 1 1 \"invert\" 1 1 3 \"thr\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA== \"lim\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA== \"pi\" Float 1 1 AAAAAA=="
+  kernelSource "kernel GamutCompression : public ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float3 threshold;\n    float shd_rolloff;\n    float cyan;\n    float magenta;\n    float yellow;\n    int method;\n    bool invert;\n\n  local:\n  float3 thr;\n  float3 lim;\n  float pi;\n\n  void init() \{\n    pi = 3.14159265359;\n\n    // thr is the percentage of the core gamut to protect: the complement of threshold.\n    thr = float3(1.0f-threshold.x, 1.0f-threshold.y, 1.0f-threshold.z);\n\n    // lim is the max distance from the gamut boundary that will be compressed\n    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary\n    // if method is Reinhard, use the limit as-is\n    if (method == 1) \{\n      lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);\n    \} else \{\n      // otherwise, we have to bruteforce the value of limit \n      // such that lim is the value of x where y=1.0f\n      // importantly, this runs once at the beginning of evaluation, NOT per-pixel!!!\n      lim = float3(\n        bisect(max(0.0001f, cyan)+1.0f, thr.x),\n        bisect(max(0.0001f, magenta)+1.0f, thr.y),\n        bisect(max(0.0001f, yellow)+1.0f, thr.z));\n    \}\n  \}\n\n  // calculate hyperbolic tangent\n  float tanh( float in) \{\n    float f = exp(2.0f*in);\n    return (f-1.0f) / (f+1.0f);\n  \}\n\n  // calculate inverse hyperbolic tangent\n  float atanh( float in) \{\n    return log((1.0f+in)/(1.0f-in))/2.0f;\n  \}\n\n  // compression function which gives the y=1 x intersect at y=0\n  float f(float x, float k, float t) \{\n    if (method == 0) \{\n      // natural logarithm compression method\n      return (exp((1.0f-t+t*log(1.0f-x)-x*t*log(1.0f-x))/(t*(1.0f-x))))*t+x*t-k;\n    \} else if (method == 1) \{\n      return k;\n    \} else if (method == 2) \{ \n      // natural exponent compression method\n      return -log((-x+1.0f)/(t-x))*(-t+x)+t-k;\n    \} else if (method == 3) \{\n      // arctangent compression method\n      return (2*tan( (pi*(1.0f-t))/(2.0f*(x-t)))*(x-t))/pi+t-k;\n    \} else if (method == 4) \{\n      // hyperbolic tangent compression method\n      return atanh((1.0f-t)/(x-t))*(x-t)+t-k;\n    \}\n  \}\n\n  int sign(float x) \{\n    return x == 0.0f ? 0.0f : x > 0.0f ? 1.0f : 0.0f;\n  \}\n\n  float bisect(float k, float t) \{\n    // use a simple bisection algorithm to bruteforce the root of f\n    // returns an approximation of the value of limit \n    // such that the compression function intersects y=1 at desired value k\n    // this allows us to specify the max distance we will compress to the gamut boundary\n    \n    float a, b, c, y;\n    float tol = 0.0001f; // accuracy of estimate\n    int nmax = 100; // max iterations\n\n    // set up reasonable initial guesses for each method given output ranges of each function\n    if (method == 0) \{\n      // natural logarithm needs a limit between -inf (linear), and 1 (clip)\n      a = -15.0f;\n      b = 0.98f;\n    \} else if (method == 4) \{\n      // tanh needs more precision\n      a = 1.000001f;\n      b = 5.0f;\n    \} else \{\n      a = 1.0001f;\n      b = 5.0f;\n    \}\n\n    if (sign(f(a, k, t)) == sign(f(b, k, t))) \{\n      // bad estimate. return something close to linear\n      if ((method == 0) || (method == 2)) \{\n        return -100.0f;\n      \} else \{\n        return 1.999999f;\n      \}\n    \}\n    c = (a+b)/2.0f;\n    y = f(c, k, t);\n    if (fabs(y) <= tol) \{\n      return c; // lucky guess\n    \}\n\n    int n = 1;\n    while ((fabs(y) > tol) && (n <= nmax)) \{\n      if (sign(y) == sign(f(a, k, t))) \{\n        a = c;\n      \} else \{\n        b = c;\n      \}\n      c = (a+b)/2.0f;\n      y = f(c, k, t);\n      n += 1;\n    \}\n    return c;\n  \}\n\n\n  // calculate compressed distance\n  float compress(float dist, float lim, float t) \{\n    float cdist;\n    if (dist < t) \{\n      cdist = dist;\n    \} else \{\n      if (method == 0) \{\n        // natural logarithm compression method: https://www.desmos.com/calculator/hmzirlw7tj\n        // inspired by ITU-R BT.2446 http://www.itu.int/pub/R-REP-BT.2446-2019\n        if (invert == 0) \{\n          cdist = t*log(dist/t-lim)-lim*t*log(dist/t-lim)+t-t*log(1.0f-lim)+lim*t*log(1.0f-lim);\n        \} else \{\n          cdist = exp((dist-t+t*log(1.0f-lim)-lim*t*log(1.0f-lim))/(t*(1.0f-lim)))*t+lim*t;\n        \}\n      \} else if (method == 1.0f) \{\n        // simple Reinhard type compression method: https://www.desmos.com/calculator/lkhdtjbodx\n        if (invert == 0) \{\n          cdist = t+1.0f/(1.0f/(dist-t)+1.0f/(1.0f-t)-1.0f/(lim-t));\n        \} else \{\n          cdist = t+1.0f/(1.0f/(dist-t)-1.0f/(1.0f-t)+1.0f/(lim-t));\n        \}\n      \} else if (method == 2) \{\n        // natural exponent compression method: https://www.desmos.com/calculator/s2adnicmmr\n        if (invert == 0) \{\n          cdist = lim-(lim-t)*exp(-(((dist-t)*((1.0f*lim)/(lim-t))/lim)));\n        \} else \{\n          cdist = -log((dist-lim)/(t-lim))*(-t+lim)/1.0f+t;\n        \}\n      \} else if (method == 3) \{\n        // arctangent compression method: https://www.desmos.com/calculator/h96qmnozpo\n        if (invert == 0) \{\n          cdist = t+(lim-t)*2/pi*atan(pi/2*(dist-t)/(lim-t));\n        \} else \{\n          cdist = t+(lim-t)*2/pi*tan(pi/2*(dist-t)/(lim-t));\n        \}\n      \} else if (method == 4) \{\n        // hyperbolic tangent compression method: https://www.desmos.com/calculator/xiwliws24x\n        if (invert == 0) \{\n          cdist = t+(lim-t)*tanh(((dist-t)/(lim-t)));\n        \} else \{\n          cdist = t+(lim-t)*atanh(dist/(lim-t)-t/(lim-t));\n        \}\n      \}\n    \}\n    return cdist;\n  \}\n\n\n  void process() \{\n    // source pixels\n    SampleType(src) rgba = src();\n    float3 rgb = float3(rgba.x, rgba.y, rgba.z);\n\n    // achromatic axis \n    float ach = max(rgb.x, max(rgb.y, rgb.z));\n\n    // achromatic with shadow rolloff below shd_rolloff threshold\n    float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));\n\n    // distance from the achromatic axis for each color component aka inverse rgb ratios\n    // distance is normalized by achromatic, so that 1.0f.0 is at gamut boundary, avoid 0 div\n    float3 dist = ach_shd == 0 ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;\n\n    // compress distance with user controlled parameterized shaper function\n    float3 cdist = float3(\n      compress(dist.x, lim.x, thr.x),\n      compress(dist.y, lim.y, thr.y),\n      compress(dist.z, lim.z, thr.z));\n\n    // recalculate rgb from compressed distance and achromatic\n    // effectively this scales each color component relative to achromatic axis by the compressed distance\n    float3 crgb = ach-cdist*ach_shd;\n\n    // write to output\n    dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);\n  \}\n\};"
   useGPUIfAvailable {{parent.use_gpu}}
   rebuild ""
-  GamutCompression_threshold {{parent.threshold}}
+  GamutCompression_threshold {{parent.threshold} {parent.threshold} {parent.threshold}}
   GamutCompression_shd_rolloff {{parent.shd_rolloff}}
   GamutCompression_cyan {{parent.cyan}}
   GamutCompression_magenta {{parent.magenta}}
@@ -56,13 +422,12 @@ Group {
   GamutCompression_invert {{parent.direction}}
   rebuild_finalise ""
   name GamutCompress
-  selected true
   xpos -40
   ypos 80
  }
  Output {
   name Output
   xpos -40
-  ypos 134
+  ypos 254
  }
 end_group
