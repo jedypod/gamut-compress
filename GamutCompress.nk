@@ -3,9 +3,7 @@ push $cut_paste_input
 Group {
  name GamutCompress
  addUserKnob {20 GamutCompress}
- addUserKnob {18 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression."}
- threshold 0.2
- addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ addUserKnob {41 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." T compress.threshold}
  addUserKnob {41 power T compress.power}
  addUserKnob {7 shd_rolloff l "shd rolloff" t "Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain." R 0 0.1}
  shd_rolloff 0.03
