@@ -33,6 +33,7 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
   // calculate compressed distance
   float compress(float x, float l, float t) {
     float cdist;
+    // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
     float s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
     if (l < 1.0001) {
       return x; // disable compression, avoid nan
