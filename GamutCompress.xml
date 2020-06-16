@@ -1,0 +1,46 @@
+<ShaderNodePreset SupportsAdaptiveDegradation="False" SupportsAction="True" SupportsTransition="False" SupportsTimeline="True" TimelineUseBack="False" MatteProvider="False" CommercialUsePermitted="True" ShaderType="Matchbox" SoftwareVersion="2017.0.0" LimitInputsToTexture="True" Version="2" Description="" Name="Gamut Compress">
+   <Shader Clear="0" GridSubdivision="1" OutputBitDepth="Output" Index="1">
+      <Uniform Index="0" NoInput="Error" Tooltip="" DisplayName="Front" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="frontTex" InputType="Front">
+      </Uniform>
+      <Uniform Index="1" NoInput="White" Tooltip="" DisplayName="Selective" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="selectiveTex" InputType="Selective">
+      </Uniform>
+      <Uniform Index="2" NoInput="White" Tooltip="" DisplayName="Matte" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="matteTex" InputType="Matte">
+      </Uniform>
+      <Uniform ResDependent="None" Max="0.4" Min="0.0" Default="0.2" Inc="0.01" Tooltip="" Row="0" Col="0" Page="0" Type="float" ChannelName="threshold" DisplayName="threshold" Name="threshold">
+      </Uniform>
+      <Uniform ResDependent="None" Max="0.1" Min="0.0" Default="0.03" Inc="0.01" Tooltip="" Row="1" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
+      </Uniform>
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.09" Inc="0.01" Tooltip="" Row="2" Col="0" Page="0" Type="float" ChannelName="cyan" DisplayName="cyan" Name="cyan">
+      </Uniform>
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.24" Inc="0.01" Tooltip="" Row="3" Col="0" Page="0" Type="float" ChannelName="magenta" DisplayName="magenta" Name="magenta">
+      </Uniform>
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.12" Inc="0.01" Tooltip="" Row="4" Col="0" Page="0" Type="float" ChannelName="yellow" DisplayName="yellow" Name="yellow">
+      </Uniform>
+      <Uniform Row="0" Col="1" Page="0" Default="1" Inc="1" Tooltip="" Type="int" ChannelName="working_colorspace" DisplayName="working space" Name="working_colorspace" ValueType="Popup">
+        <PopupEntry Title="ACEScg" Value="0">
+        </PopupEntry>
+        <PopupEntry Title="ACEScct" Value="1">
+        </PopupEntry>
+      </Uniform>
+      <Uniform Row="1" Col="1" Page="0" Default="0" Inc="1" Tooltip="" Type="int" ChannelName="method" DisplayName="method" Name="method" ValueType="Popup">
+        <PopupEntry Title="log" Value="0">
+        </PopupEntry>
+        <PopupEntry Title="reinhard" Value="1">
+        </PopupEntry>
+        <PopupEntry Title="exp" Value="2">
+        </PopupEntry>
+        <PopupEntry Title="arctan" Value="3">
+        </PopupEntry>
+        <PopupEntry Title="tanh" Value="4">
+        </PopupEntry>
+      </Uniform>
+      <Uniform Row="2" Col="1" Page="0" Default="False" Tooltip="" Type="bool" ChannelName="invert" DisplayName="invert" Name="invert">
+      </Uniform>
+   </Shader>
+   <Page Name="Gamut Compress" Page="0">
+      <Col Name="Controls" Col="0" Page="0">
+      </Col>
+      <Col Name="Settings" Col="1" Page="0">
+      </Col>
+   </Page>
+</ShaderNodePreset>
