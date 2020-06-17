@@ -21,16 +21,20 @@ If the display rendering transform does not elegantly handle out of gamut colors
 Compressing these out of gamut colors back into gamut is useful for pleasing color reproduction, and for reducing issues in VFX compositing and DI.
 
 
-## More Information
-- [Information](/docs/gamut-compress-algorithm.md) on how GamutCompress works.
-- [Documentation](/docs/gamut-compress-documentation.md) on how to use GamutCompress.
+## Documentation
+For more information about [how the tool works](/docs/gamut-compress-algorithm.md) and [how to use it](/docs/gamut-compress-documentation.md), please check out the [documentation](/docs).
 
-## DCC Implementations
-- [Blinkscript for Nuke](docs/doc-nuke.md)
+## Implementations
+DCC Implementations for the following software packages are included. For specific installation instructions, check out the documentation links for each package below.
+- [Blinkscript for Nuke](docs/doc-nuke.md) (A [non-blinkscript node](GamutCompress.nk) is also provided for Nuke Non-Commercial).
 - [Fuse for Fusion or Resolve Lite](docs/doc-fusion.md)
 - [DCTL for Resolve Studio](docs/doc-resolve.md)
 - [Matchbox for Flame, Scratch and Baselight](docs/doc-flame.md)
 
+## Download
+You can grab the latest "stable" release from the [Releases page](https://github.com/jedypod/gamut-compress/releases), or you can clone the repo to get the latest work. 
 
-# About
+`git clone git@github.com:jedypod/gamut-compress.git`
+
+## About
 Written by Jed Smith with [tons of help](https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective) from the [ACES Gamut Mapping Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group). 
