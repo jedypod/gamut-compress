@@ -46,7 +46,14 @@ a good average among many digital cinema camera gamuts, but you may
 want to tweak these values for your needs.
 
 Direction
-Specifies whether to apply or inverse the gamut compression operation."
+Specifies whether to apply or inverse the gamut compression operation.
+
+About
+Written by Jed Smith with lots of help from the ACES Gamut Mapping Virtual Working Group.
+https://github.com/jedypod
+https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective
+https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group
+"
   Name="Gamut Compress">
 
   <Shader Clear="0" GridSubdivision="1" OutputBitDepth="Output" Index="1">
