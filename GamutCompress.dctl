@@ -4,7 +4,7 @@ DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1
 DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescg}, {acescct, acescg});
+DEFINE_UI_PARAMS(linearize_acescct, linearize_acescct, DCTLUI_CHECK_BOX, 1);
 DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
 
 
@@ -59,7 +59,7 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   float3 rgb = make_float3(p_R, p_G, p_B);
   
   // linearize
-  if (working_colorspace == acescct) {
+  if (linearize_acescct == 1) {
     rgb.x = acescct_to_lin(rgb.x);
     rgb.y = acescct_to_lin(rgb.y);
     rgb.z = acescct_to_lin(rgb.z);
@@ -105,12 +105,12 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   crgb.y = isnan(crgb.y) ? 0.0f : crgb.y;
   crgb.z = isnan(crgb.z) ? 0.0f : crgb.z;
 
-  if (working_colorspace == acescct) {
+  if (linearize_acescct == 1) {
     crgb.x = lin_to_acescct(crgb.x);
     crgb.y = lin_to_acescct(crgb.y);
     crgb.z = lin_to_acescct(crgb.z);
   }
 
-  // // write output
+  // write output
   return crgb;
 }
