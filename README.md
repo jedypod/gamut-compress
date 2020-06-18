@@ -10,9 +10,11 @@ If cameras were colorimetric devices that satisfied the [Luther condition](https
 
 These out of gamut colors most often ocurr with highly saturated light sources like police lights, neon lights, or lasers.
 
-[<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg?raw=true) [<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg?raw=true)
+This tool was developed as part of the [ACES Gamut Mapping Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group/80). For more info check out the [working group proposal](https://www.dropbox.com/s/5hz8e07ydx0d2bm/ACES_Gamut_Mapping_Working_Group_Proposal_Approved.pdf).
 
-Above is a contactsheet of [sample images](https://www.dropbox.com/sh/u6z2a0jboo4vno8/AAB-10qcflhpr0C5LWhs7Kq4a?dl=0) from the [Gamut Mapping ACES Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group/80). For more info on the working group check out the [working group proposal](https://www.dropbox.com/s/5hz8e07ydx0d2bm/ACES_Gamut_Mapping_Working_Group_Proposal_Approved.pdf).
+Here is a contactsheet of [sample images](https://www.dropbox.com/sh/u6z2a0jboo4vno8/AAB-10qcflhpr0C5LWhs7Kq4a?dl=0) showing the visual appearance of out of gamut colors.
+
+[<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg?raw=true) [<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg?raw=true)
 
 On the left are the original images with the ACES Rec.709 RRT display rendering transform applied. On the right are the same images, but with gamut compression applied.
 
@@ -38,3 +40,5 @@ You can grab the latest "stable" release from the [Releases page](https://github
 
 ## About
 Written by Jed Smith with [tons of help](https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective) from the [ACES Gamut Mapping Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group). 
+
+Also huge thanks to the contributions of @nick-shaw for the initial versions of the DCTL and Matchbox implementations, and to Jacob Danell for the first version of the Fuse implementation.
