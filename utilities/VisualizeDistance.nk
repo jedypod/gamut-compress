@@ -1,0 +1,199 @@
+set cut_paste_input [stack 0]
+push $cut_paste_input
+Group {
+ name VisualizeDistance
+ addUserKnob {20 VisualizeDistance}
+ addUserKnob {4 type M {inside outside}}
+ type outside
+ addUserKnob {6 show_distance l "show distance" -STARTLINE}
+ addUserKnob {7 threshold t "threshold of color distance to visualize. 1.0 is the edge of the gamut boundary. 0.0 is all colors." R 0 1.2}
+ threshold 1
+ addUserKnob {7 shd_rolloff l "shd rolloff" R 0 0.1}
+ shd_rolloff 0.03
+ addUserKnob {4 bg t "choose bg to put behind result colors" M {checkerboard "solid color"}}
+ addUserKnob {41 color T Fill1.color}
+}
+ Input {
+  inputs 0
+  name Input
+  xpos -40
+  ypos -285
+ }
+ Dot {
+  name Dot1
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -6
+  ypos -174
+ }
+set N298bb010 [stack 0]
+ Dot {
+  name Dot2
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -116
+  ypos -174
+ }
+set N29833c60 [stack 0]
+ Dot {
+  name Dot5
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -226
+  ypos -174
+ }
+set N29851320 [stack 0]
+ Expression {
+  channel0 {rgba.red rgba.green rgba.blue none}
+  expr0 max(r,g,b)
+  name achromatic
+  note_font Helvetica
+  xpos -370
+  ypos -129
+ }
+set N298561c0 [stack 0]
+push $N29851320
+ Merge2 {
+  inputs 2
+  operation minus
+  bbox B
+  Achannels rgb
+  Bchannels rgb
+  output rgb
+  name Merge2
+  note_font Helvetica
+  xpos -260
+  ypos -129
+ }
+push $N298561c0
+ Expression {
+  temp_name0 c_r
+  temp_expr0 1-r
+  temp_name1 c_g
+  temp_expr1 1-g
+  temp_name2 c_b
+  temp_expr2 1-b
+  expr0 1-(c_r<(1-thr)?c_r:(1-thr)+thr*tanh(((c_r-(1-thr))/thr)))
+  expr1 1-(c_g<(1-thr)?c_g:(1-thr)+thr*tanh(((c_g-(1-thr))/thr)))
+  expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
+  name toe
+  note_font Helvetica
+  xpos -370
+  ypos -81
+  disable {{parent.shd_rolloff==0}}
+  addUserKnob {20 Params_tab l Params}
+  addUserKnob {7 thr t "complement of threshold"}
+  thr {{parent.shd_rolloff}}
+ }
+ Merge2 {
+  inputs 2
+  operation divide
+  bbox B
+  Achannels rgb
+  Bchannels rgb
+  output rgb
+  name Merge3
+  note_font Helvetica
+  xpos -260
+  ypos -81
+ }
+set N297c17d0 [stack 0]
+ Dot {
+  name Dot4
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -226
+  ypos 66
+ }
+push $N297c17d0
+push $N29833c60
+ MergeExpression {
+  inputs 2
+  temp_name0 limit
+  temp_expr0 threshold
+  temp_name1 sat
+  temp_expr1 max(Ar,Ag,Ab)
+  expr0 type?(sat>=limit?Br:0):sat<=limit?Br:0
+  expr1 type?(sat>=limit?Bg:0):sat<=limit?Bg:0
+  expr2 type?(sat>=limit?Bb:0):sat<=limit?Bb:0
+  expr3 type?(sat>limit?1:0):sat<limit?1:0
+  name MergeExpression1
+  note_font Helvetica
+  xpos -150
+  ypos -81
+ }
+ Dot {
+  name Dot3
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -116
+  ypos -30
+ }
+push $N298bb010
+ Fill {
+  output rgb
+  color 0.18
+  name Fill1
+  note_font Helvetica
+  xpos -40
+  ypos -129
+ }
+ CheckerBoard2 {
+  inputs 0
+  color0 0.1000000015
+  color1 {{parent.color} {parent.color} {parent.color} {parent.color}}
+  color2 {{color0} {color0} {color0} {color0}}
+  color3 {{color1} {color1} {color1} {color1}}
+  linecolor 0
+  centerlinewidth 0
+  name CheckerBoard1
+  note_font Helvetica
+  xpos 70
+  ypos -129
+  postage_stamp false
+ }
+ Reformat {
+  type "to box"
+  box_width {{parent.input.width}}
+  box_height {{parent.input.height}}
+  box_fixed true
+  resize fill
+  name ReformatBox
+  xpos 70
+  ypos -82
+ }
+ Switch {
+  inputs 2
+  which {{parent.bg}}
+  name Switch1
+  note_font Helvetica
+  xpos -40
+  ypos -81
+ }
+ Merge2 {
+  inputs 2
+  bbox B
+  name Merge1
+  note_font Helvetica
+  xpos -40
+  ypos -33
+ }
+ Switch {
+  inputs 2
+  which {{parent.show_distance}}
+  name switch_distance
+  note_font Helvetica
+  xpos -40
+  ypos 63
+ }
+ Output {
+  name Output
+  xpos -40
+  ypos 110
+ }
+end_group
