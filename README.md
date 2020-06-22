@@ -22,10 +22,6 @@ If the display rendering transform does not elegantly handle out of gamut colors
 
 Compressing these out of gamut colors back into gamut is useful for pleasing color reproduction, and for reducing issues in VFX compositing and DI.
 
-
-## Documentation
-For more information about [how the tool works](/docs/gamut-compress-algorithm.md) and [how to use it](/docs/gamut-compress-documentation.md), please check out the [documentation](/docs).
-
 ## Implementations
 DCC Implementations for the following software packages are included. For specific installation instructions, check out the documentation links for each package below.
 - [Blinkscript for Nuke](docs/doc-nuke.md) (A [non-blinkscript node](GamutCompress.nk) is also provided for Nuke Non-Commercial).
@@ -38,7 +34,10 @@ You can grab the latest "stable" release from the [Releases page](https://github
 
 `git clone git@github.com:jedypod/gamut-compress.git`
 
+## Documentation
+For more information about [how the it works](/docs/gamut-compress-algorithm.md) and [how to use it](/docs/gamut-compress-documentation.md), please check out the [documentation](/docs).
+
 ## About
 Written by Jed Smith with [tons of help](https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective) from the [ACES Gamut Mapping Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group). 
 
-Also huge thanks to the contributions of @nick-shaw for the initial versions of the DCTL and Matchbox implementations, and to Jacob Danell for the first version of the Fuse implementation.
+Also huge thanks to the contributions of [@nick-shaw](https://github.com/nick-shaw) for the initial versions of the DCTL and Matchbox implementations, and to Jacob Danell for the first version of the Fuse implementation.

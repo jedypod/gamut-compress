@@ -1,0 +1,522 @@
+set cut_paste_input [stack 0]
+ColorWheel {
+ inputs 0
+ name ColorWheel6
+ note_font Helvetica
+ selected true
+ xpos 7550
+ ypos 6639
+}
+Group {
+ inputs 0
+ name GamutPrimaries
+ selected true
+ xpos 7440
+ ypos 6639
+ postage_stamp true
+ addUserKnob {20 GamutPrimaries_tab l GamutPrimaries}
+ addUserKnob {41 gamut T ColorMatrix5.gamut}
+ addUserKnob {41 red T Primaries.red}
+ addUserKnob {41 green T Primaries.green}
+ addUserKnob {41 blue T Primaries.blue}
+ addUserKnob {41 white T Primaries.white}
+}
+ Constant {
+  inputs 0
+  color {0 0 0 0}
+  format "4 1 0 0 4 1 1 rgbw"
+  name Constant3
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos -42
+  postage_stamp false
+ }
+ Reformat {
+  type "to box"
+  box_width 4
+  box_height 2
+  box_fixed true
+  name Reformat1
+  xpos 509
+  ypos -16
+ }
+ Rectangle {
+  area {0 0 1 2}
+  color {1 0 0 0}
+  name Rectangle1
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos 10
+ }
+ Rectangle {
+  area {1 0 2 2}
+  color {0 1 0 0}
+  name Rectangle2
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos 36
+ }
+ Rectangle {
+  area {2 0 3 2}
+  color {0 0 1 0}
+  name Rectangle3
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos 59
+ }
+ Rectangle {
+  area {3 0 4 2}
+  color {1 1 1 0}
+  name Rectangle4
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos 85
+ }
+ Group {
+  name ColorMatrix5
+  label "\[value gamut] to XYZ\n"
+  xpos 509
+  ypos 128
+  addUserKnob {20 GamutToXYZ_tab l GamutToXYZ}
+  addUserKnob {4 gamut t "Choose gamut" M {XYZ ACES ACEScg "Filmlight E-Gamut" Rec709 Rec2020 P3D60 P3D65 P3DCI ArriAlexaWideGamut "AdobeRGB\t" AdobeWideGamutRGB ROMM RIMM ERIMM ProPhotoRGB REDDRAGONcolor REDDRAGONcolor2 REDcolor REDcolor2 REDcolor3 REDcolor4 REDWideGamutRGB GoProProtune CanonCinemaGamut SonySGamut SonySGamut3Cine PanasonicVGamut ""}}
+  addUserKnob {6 invert +STARTLINE}
+  addUserKnob {41 matrix T ColorMatrix.matrix}
+ }
+  Input {
+   inputs 0
+   name Input
+   xpos -40
+   ypos -10
+  }
+  ColorMatrix {
+   matrix {
+       {{curve(which) 1 0.9525524378 0.6624541879 0.7053968906 0.4123907983 0.6369580626 0.5049495697 0.4865709841 0.4451698363 0.6380076408 0.5766690373 0.7165006995 0.797760427 0.797760427 0.797760427 0.7976718545 0.5070186853 0.4462202489 0.4300414324 0.4581649601 0.4878340662 0.4517004192 0.7352752686 0.5022571683 0.7160496712 0.7064827085 0.5990839601 0.6796444654} {curve(which) 0 0 0.1340042055 0.1640413404 0.3575843275 0.1446169019 0.2646814585 0.2656676769 0.2771343887 0.2147038579 0.1855582297 0.1010205746 0.1351858526 0.1351858526 0.1351858526 0.1351878047 0.3587769568 0.3157556653 0.3700728714 0.3832037449 0.3432727158 0.3178463876 0.06860940903 0.2929667532 0.1296834797 0.1288010478 0.2489254922 0.1522114277} {curve(which) 0 9.367863095e-05 0.1561876982 0.08101774752 0.180480808 0.1688809693 0.1830150485 0.1982172877 0.1722826511 0.09774444997 0.1882286519 0.1467743814 0.03134934977 0.03134934977 0.03134934977 0.03133957833 0.0868505761 0.190669477 0.152531758 0.1112773567 0.1215386018 0.1830992699 0.1465712637 0.1552320272 0.1047228053 0.1151721701 0.1024464965 0.1186000481}}
+       {{curve(which) 0 0.3439664543 0.2722287476 0.2801307142 0.2126390189 0.2627002299 0.237623319 0.2289745659 0.209491685 0.2919537723 0.2973450124 0.258728236 0.2880711257 0.2880711257 0.2880711257 0.2880405784 0.2207257152 0.1942579001 0.2022213936 0.1694435924 0.2289056629 0.2119505703 0.2866941094 0.1387997568 0.2612613738 0.2709796727 0.2150758505 0.2606855333} {curve(which) 1 0.7281661034 0.6740817428 0.8202066422 0.7151686549 0.6779980659 0.6891706586 0.6917385459 0.7215952873 0.8238410354 0.6273635626 0.7246823311 0.7118432522 0.7118432522 0.7118432522 0.7118694782 0.839184761 0.7385566831 0.7585275769 0.8648257852 0.7808576822 0.7230190039 0.8429791331 0.910841465 0.8696421385 0.786606431 0.8850684762 0.7748944759} {curve(which) 0 -0.07213255018 0.05368951708 -0.1003373638 0.07219231874 0.05930171534 0.07320601493 0.07928691059 0.06891305745 -0.1157948226 0.07529145479 0.01658944227 8.565396274e-05 8.565396274e-05 8.565396274e-05 8.991353388e-05 -0.05991046131 0.06718540192 0.03925102949 -0.03426937759 -0.009763340466 0.06503042579 -0.1296732277 -0.04964122549 -0.1309035122 -0.05758608505 -0.1001443192 -0.03558001295}}
+       {{curve(which) 0 -3.863927134e-08 -0.005574660841 -0.1037815213 0.01933082007 0 0 0 0 0.0027982709 0.02703136392 -2.906408625e-08 -3.236030111e-08 -3.236030111e-08 -3.236030111e-08 0 -0.0544523783 -0.04792318866 -0.0176958181 -0.1061859056 -0.02100777067 -0.01945115253 -0.07968087494 0.07801423222 -0.009676366113 -0.009677864611 -0.03206583485 -0.009310216643} {curve(which) 0 0 0.004060741514 -0.07290724665 0.1191947311 0.0280726999 0.0449459292 0.04511339962 0.04706057906 -0.06703422964 0.07068887353 0.05121183768 1.2621717e-08 1.2621717e-08 1.2621717e-08 -1.262213711e-08 -0.0003228379355 -0.0002844714036 0.08768811822 0.02554347552 0.01782695204 0.01650637016 -0.3473432064 -0.3148325086 -0.2364816219 0.004600019194 -0.02765839547 -0.004612449091} {curve(which) 1 1.008825183 1.010339141 1.265746474 0.950532198 1.060985088 0.9638792276 1.043944359 0.9073553085 1.153293729 0.9913375378 0.7738927603 0.8251045942 0.8251045942 0.8251045942 0.8248898983 1.063571215 1.057001948 0.9388025999 1.089437366 1.01197505 1.011739731 1.51608181 1.325875998 1.335215807 1.094135642 1.148782015 1.102980375}}
+     }
+   invert {{parent.invert}}
+   name ColorMatrix
+   label "RGB to XYZ"
+   xpos -40
+   ypos 33
+   addUserKnob {20 Gamut}
+   addUserKnob {3 which}
+   which {{parent.gamut}}
+   addUserKnob {12 rxy +DISABLED}
+   rxy {{curve(which) 0 0.7347 0.713 0.8 0.64 0.708 0.68 0.68 0.68 0.684 0.64 0.7347 0.7347 0.7347 0.7347 0.734699 0.7530442228 0.7530444911 0.6997470013 0.8786825105 0.7011810359 0.7011805919 0.780308 0.69848046 0.74 0.73 0.766 0.73} {curve(which) 0 0.2653 0.293 0.3177 0.33 0.292 0.32 0.32 0.32 0.313 0.33 0.2653 0.2653 0.2653 0.2653 0.265301 0.3278305767 0.3278310295 0.3290469303 0.3249640074 0.3290141556 0.3290136991 0.304253 0.19302645 0.27 0.28 0.275 0.28}}
+   addUserKnob {12 gxy +DISABLED}
+   gxy {{curve(which) 0 0 0.165 0.18 0.3 0.17 0.265 0.265 0.265 0.221 0.21 0.1152 0.1596 0.1596 0.1596 0.159597 0.2995702285 0.2995704905 0.304264039 0.3008887144 0.3006003047 0.3006003955 0.121595 0.32955538 0.17 0.14 0.225 0.165} {curve(which) 0 1 0.83 0.9 0.6 0.797 0.69 0.69 0.69 0.848 0.71 0.8264 0.8404 0.8404 0.8404 0.840403 0.700699322 0.7006994156 0.6236411451 0.6790547558 0.6837888343 0.6837888243 1.493994 1.02459662 1.14 0.855 0.8 0.84}}
+   addUserKnob {12 bxy +DISABLED}
+   bxy {{curve(which) 0 0.0001 0.128 0.065 0.15 0.131 0.15 0.15 0.15 0.0861 0.15 0.1566 0.0366 0.0366 0.0366 0.036598 0.07964206674 0.1450115843 0.1349139613 0.09539869461 0.1081544556 0.1453319462 0.095612 0.10844263 0.08 0.1 0.089 0.1} {curve(which) 0 -0.077 0.044 -0.0805 0.06 0.046 0.06 0.06 0.06 -0.102 0.06 0.0177 0.0001 0.0001 0.0001 0.000105 -0.05493795109 0.05109712509 0.03471744128 -0.02937932683 -0.008688175787 0.05161680362 -0.084589 -0.03467857 -0.1 -0.05 -0.087 -0.03}}
+   addUserKnob {12 wxy +DISABLED}
+   wxy {{curve(which) 0.33333 0.32168 0.32168 0.3127 0.3127 0.3127 0.32168 0.3127 0.314 0.3127 0.3127 0.3457 0.3457 0.3457 0.3457 0.345704 0.3216831877 0.3216832104 0.3216832894 0.3216832894 0.3216832104 0.3216832894 0.3127 0.3127 0.3127 0.3127 0.3127 0.3127} {curve(which) 0.33333 0.33767 0.33767 0.329 0.329 0.329 0.33767 0.329 0.351 0.329 0.329 0.3585 0.3585 0.3585 0.3585 0.35854 0.337673316 0.3376736101 0.3376734472 0.3376734472 0.3376736101 0.3376734472 0.329 0.329 0.329 0.329 0.329 0.329}}
+  }
+  Output {
+   name Output
+   xpos -40
+   ypos 86
+  }
+ end_group
+set N11e135b0 [stack 0]
+ Colorspace {
+  colorspace_in CIE-XYZ
+  colorspace_out CIE-Yxy
+  name Colorspace1
+  label "\[value colorspace_in] -> \[value colorspace_out]"
+  xpos 509
+  ypos 185
+ }
+ NoOp {
+  name Primaries
+  note_font "Bitstream Vera Sans"
+  xpos 509
+  ypos 238
+  addUserKnob {20 User}
+  addUserKnob {12 red}
+  red {{"\[sample this green 0 0]"} {"\[sample this blue 0 0]"}}
+  addUserKnob {12 green}
+  green {{"\[sample this green 1 0]"} {"\[sample this blue 1 0]"}}
+  addUserKnob {12 blue}
+  blue {{"\[sample this green 2 0]"} {"\[sample this blue 2 0]"}}
+  addUserKnob {12 white}
+  white {{"\[sample this green 3 0]"} {"\[sample this blue 3 0]"}}
+ }
+push $N11e135b0
+ Output {
+  name Output
+  xpos 400
+  ypos 134
+ }
+end_group
+Group {
+ name ChromaticityConverter_live
+ tile_color 0xbd91c9ff
+ label "\[if \{\[value invert]\} \{return \"\[value dst_colorspace_name] to \[value src_colorspace_name]\"\} else \{return \"\[value src_colorspace_name] to \[value dst_colorspace_name]\"\}]"
+ selected true
+ xpos 7440
+ ypos 6752
+ addUserKnob {20 ChromaticityConverter_tab l ChromaticityConverter}
+ addUserKnob {26 colorspace_chromaticities_label l " " T "<b>Src Colorspace Chromaticities</b>"}
+ addUserKnob {35 src_presets l preset M {colorspace/ACES "knobs this \{rxy \{0.73470 0.26530\} gxy \{0.00000 1.00000\} bxy \{0.00010 -0.07700\} wxy \{0.32168 0.33767\} src_colorspace_name \{ACES\}\}" colorspace/ACEScg "knobs this \{rxy \{0.713 0.293\} gxy \{0.165 0.830\} bxy \{0.128 0.044\} wxy \{0.32168 0.33767\} src_colorspace_name \{ACEScg\}\}" "colorspace/Filmlight E-Gamut" "knobs this \{ rxy \{0.8 0.3177\} gxy \{0.18 0.9\} bxy \{0.065 -0.0805\} wxy \{0.3127 0.329\} src_colorspace_name \{Filmlight E-Gamut\}\}" colorspace/Rec709 "knobs this \{rxy \{0.64000 0.33000\} gxy \{0.30000 0.60000\} bxy \{0.15000 0.06000\} wxy \{0.31270 0.32900\} src_colorspace_name \{Rec709\}\}" colorspace/Rec2020 "knobs this \{rxy \{0.70800 0.29200\} gxy \{0.17000 0.79700\} bxy \{0.13100 0.04600\} wxy \{0.31270 0.32900\} src_colorspace_name \{Rec2020\}\}" colorspace/P3D60 "knobs this \{rxy \{0.68000 0.32000\} gxy \{0.26500 0.69000\} bxy \{0.15000 0.06000\} wxy \{0.32168 0.33767\} src_colorspace_name \{P3D60\}\}" colorspace/P3D65 "knobs this \{rxy \{0.68000 0.32000\} gxy \{0.26500 0.69000\} bxy \{0.15000 0.06000\} wxy \{0.31270 0.32900\} src_colorspace_name \{P3D65\}\}" colorspace/P3DCI "knobs this \{rxy \{0.68000 0.32000\} gxy \{0.26500 0.69000\} bxy \{0.15000 0.06000\} wxy \{0.31400 0.35100\} src_colorspace_name \{P3DCI\}\}" colorspace/ArriAlexaWideGamut "knobs this \{rxy \{0.68400 0.31300\} gxy \{0.22100 0.84800\} bxy \{0.08610 -0.10200\} wxy \{0.31270 0.32900\} src_colorspace_name \{ArriAlexaWideGamut\}\}" "colorspace/AdobeRGB\t" "knobs this \{rxy \{0.6400 0.3300\} gxy \{0.2100 0.7100\} bxy \{0.1500 0.0600\} wxy \{0.3127 0.3290\} src_colorspace_name \{AdobeRGB\}\}" colorspace/AdobeWideGamutRGB "knobs this \{rxy \{0.7347 0.2653\} gxy \{0.1152 0.8264\} bxy \{0.1566 0.0177\} wxy \{0.3457 0.3585\} src_colorspace_name \{AdobeWideGamutRGB\}\}" colorspace/ROMM "knobs this \{rxy \{7.34700000e-01 2.65300000e-01\} gxy \{1.59600000e-01  8.40400000e-01\} bxy \{3.66000000e-02 1.00000000e-04\} wxy \{0.3457 0.3585\} src_colorspace_name \{ROMM\}\}" colorspace/RIMM "knobs this \{rxy \{7.34700000e-01 2.65300000e-01\} gxy \{1.59600000e-01 8.40400000e-01\} bxy \{3.66000000e-02 1.00000000e-04\} wxy \{0.3457 0.3585\} src_colorspace_name \{RIMM\}\}" colorspace/ERIMM "knobs this \{rxy \{7.34700000e-01 2.65300000e-01\} gxy \{1.59600000e-01 8.40400000e-01\} bxy \{3.66000000e-02 1.00000000e-04\} wxy \{0.3457 0.3585\} src_colorspace_name \{ERIMM\}\}" colorspace/ProPhotoRGB "knobs this \{rxy \{0.734699 0.265301\} gxy \{0.159597 0.840403\} bxy \{0.036598 0.000105\} wxy \{0.345704 0.358540\} src_colorspace_name \{ProPhotoRGB\}\}" colorspace/REDDRAGONcolor "knobs this \{rxy \{0.753044222785 0.327830576682\} gxy \{0.299570228481 0.700699321956\} bxy \{0.079642066735 -0.0549379510888\} wxy \{0.321683187724 0.337673316035\} src_colorspace_name \{REDDRAGONcolor\}\}" colorspace/REDDRAGONcolor2 "knobs this \{rxy \{0.753044491143 0.327831029513\} gxy \{0.299570490451 0.700699415614\} bxy \{0.145011584278 0.0510971250879\} wxy \{0.321683210353 0.337673610062\} src_colorspace_name \{REDDRAGONcolor2\}\}" colorspace/REDcolor "knobs this \{rxy \{0.699747001291 0.329046930313\} gxy \{0.304264039024 0.623641145129\} bxy \{0.134913961296 0.0347174412813\} wxy \{0.321683289449 0.337673447208\} src_colorspace_name \{REDcolor\}\}" colorspace/REDcolor2 "knobs this \{rxy \{0.878682510476 0.32496400741\} gxy \{0.300888714367 0.679054755791\} bxy \{0.0953986946056 -0.0293793268343\} wxy \{0.321683289449 0.337673447208\} src_colorspace_name \{REDcolor2\}\}" colorspace/REDcolor3 "knobs this \{rxy \{0.701181035906 0.329014155583\} gxy \{0.300600304652 0.683788834269\} bxy \{0.108154455624 -0.00868817578666\} wxy \{0.321683210353 0.337673610062\} src_colorspace_name \{REDcolor3\}\}" colorspace/REDcolor4 "knobs this \{rxy \{0.701180591892 0.329013699116\} gxy \{0.300600395529 0.683788824257\} bxy \{0.145331946229 0.0516168036226\} wxy \{0.321683289449 0.337673447208\} src_colorspace_name \{REDcolor4\}\}" colorspace/REDWideGamutRGB "knobs this \{rxy \{0.780308 0.304253\} gxy \{0.121595 1.493994\} bxy \{0.095612 -0.084589\} wxy \{0.3127 0.3290\} src_colorspace_name \{REDWideGamutRGB\}\}" colorspace/GoProProtune "knobs this \{rxy \{0.69848046 0.19302645\} gxy \{0.32955538 1.02459662\} bxy \{0.10844263 -0.03467857\} wxy \{0.3127 0.329\} src_colorspace_name \{GoProProtune\}\}" colorspace/CanonCinemaGamut "knobs this \{rxy \{0.74 0.27\} gxy \{0.17 1.14\} bxy \{0.08 -0.1\} wxy \{0.3127 0.329\} src_colorspace_name \{CanonCinemaGamut\}\}" colorspace/SonySGamut "knobs this \{rxy \{0.73 0.28\} gxy \{0.14 0.855\} bxy \{0.1 -0.05\} wxy \{0.3127 0.329\} src_colorspace_name \{SonySGamut\}\}" colorspace/SonySGamut3Cine "knobs this \{rxy \{0.766 0.275\} gxy \{0.225 0.8\} bxy \{0.089 -0.087\} wxy \{0.3127 0.329\} src_colorspace_name \{SonySGamut3Cine\}\}" colorspace/PanasonicVGamut "knobs this \{rxy \{0.730 0.280\} gxy \{0.165 0.840\} bxy \{0.100 -0.030\} wxy \{0.3127 0.3290\} src_colorspace_name \{PanasonicVGamut\}\}" colorspace/XYZ "knobs this \{rxy \{0 0\} gxy \{0 0\} bxy \{0 0\} wxy \{0 0\} src_colorspace_name \{XYZ\}\}"}}
+ addUserKnob {41 rxy l r T _knobchanged_.rxy}
+ addUserKnob {41 gxy l g T _knobchanged_.gxy}
+ addUserKnob {41 bxy l b T _knobchanged_.bxy}
+ addUserKnob {41 wxy l w T _knobchanged_.wxy}
+ addUserKnob {1 src_colorspace_name l src +DISABLED}
+ src_colorspace_name ACES
+ addUserKnob {26 ""}
+ addUserKnob {26 dst_colorspace_chromaticities_label l " " T "<b>Dst Colorspace Chromaticities</b>"}
+ addUserKnob {35 dst_presets l preset M {colorspace/ACES "knobs this \{drxy \{0.73470 0.26530\} dgxy \{0.00000 1.00000\} dbxy \{0.00010 -0.07700\} dwxy \{0.32168 0.33767\} dst_colorspace_name \{ACES\}\}" colorspace/ACEScg "knobs this \{drxy \{0.713 0.293\} dgxy \{0.165 0.830\} dbxy \{0.128 0.044\} dwxy \{0.32168 0.33767\} dst_colorspace_name \{ACEScg\}\}" "colorspace/Filmlight E-Gamut" "knobs this \{ drxy \{0.8 0.3177\} dgxy \{0.18 0.9\} dbxy \{0.065 -0.0805\} dwxy \{0.3127 0.329\} dst_colorspace_name \{Filmlight E-Gamut\}\}" colorspace/Rec709 "knobs this \{drxy \{0.64000 0.33000\} dgxy \{0.30000 0.60000\} dbxy \{0.15000 0.06000\} dwxy \{0.31270 0.32900\} dst_colorspace_name \{Rec709\}\}" colorspace/Rec2020 "knobs this \{drxy \{0.70800 0.29200\} dgxy \{0.17000 0.79700\} dbxy \{0.13100 0.04600\} dwxy \{0.31270 0.32900\} dst_colorspace_name \{Rec2020\}\}" colorspace/P3D60 "knobs this \{drxy \{0.68000 0.32000\} dgxy \{0.26500 0.69000\} dbxy \{0.15000 0.06000\} dwxy \{0.32168 0.33767\} dst_colorspace_name \{P3D60\}\}" colorspace/P3D65 "knobs this \{drxy \{0.68000 0.32000\} dgxy \{0.26500 0.69000\} dbxy \{0.15000 0.06000\} dwxy \{0.31270 0.32900\} dst_colorspace_name \{P3D65\}\}" colorspace/P3DCI "knobs this \{drxy \{0.68000 0.32000\} dgxy \{0.26500 0.69000\} dbxy \{0.15000 0.06000\} dwxy \{0.31400 0.35100\} dst_colorspace_name \{P3DCI\}\}" colorspace/ArriAlexaWideGamut "knobs this \{drxy \{0.68400 0.31300\} dgxy \{0.22100 0.84800\} dbxy \{0.08610 -0.10200\} dwxy \{0.31270 0.32900\} dst_colorspace_name \{ArriAlexaWideGamut\}\}" "colorspace/AdobeRGB\t" "knobs this \{drxy \{0.6400 0.3300\} dgxy \{0.2100 0.7100\} dbxy \{0.1500 0.0600\} dwxy \{0.3127 0.3290\} dst_colorspace_name \{AdobeRGB\}\}" colorspace/AdobeWideGamutRGB "knobs this \{drxy \{0.7347 0.2653\} dgxy \{0.1152 0.8264\} dbxy \{0.1566 0.0177\} dwxy \{0.3457 0.3585\} dst_colorspace_name \{AdobeWideGamutRGB\}\}" colorspace/ROMM "knobs this \{drxy \{7.34700000e-01 2.65300000e-01\} dgxy \{1.59600000e-01  8.40400000e-01\} dbxy \{3.66000000e-02 1.00000000e-04\} dwxy \{0.3457 0.3585\} dst_colorspace_name \{ROMM\}\}" colorspace/RIMM "knobs this \{drxy \{7.34700000e-01 2.65300000e-01\} dgxy \{1.59600000e-01 8.40400000e-01\} dbxy \{3.66000000e-02 1.00000000e-04\} dwxy \{0.3457 0.3585\} dst_colorspace_name \{RIMM\}\}" colorspace/ERIMM "knobs this \{drxy \{7.34700000e-01 2.65300000e-01\} dgxy \{1.59600000e-01 8.40400000e-01\} dbxy \{3.66000000e-02 1.00000000e-04\} dwxy \{0.3457 0.3585\} dst_colorspace_name \{ERIMM\}\}" colorspace/ProPhotoRGB "knobs this \{drxy \{0.734699 0.265301\} dgxy \{0.159597 0.840403\} dbxy \{0.036598 0.000105\} dwxy \{0.345704 0.358540\} dst_colorspace_name \{ProPhotoRGB\}\}" colorspace/REDDRAGONcolor "knobs this \{drxy \{0.753044222785 0.327830576682\} dgxy \{0.299570228481 0.700699321956\} dbxy \{0.079642066735 -0.0549379510888\} dwxy \{0.321683187724 0.337673316035\} dst_colorspace_name \{REDDRAGONcolor\}\}" colorspace/REDDRAGONcolor2 "knobs this \{drxy \{0.753044491143 0.327831029513\} dgxy \{0.299570490451 0.700699415614\} dbxy \{0.145011584278 0.0510971250879\} dwxy \{0.321683210353 0.337673610062\} dst_colorspace_name \{REDDRAGONcolor2\}\}" colorspace/REDcolor "knobs this \{drxy \{0.699747001291 0.329046930313\} dgxy \{0.304264039024 0.623641145129\} dbxy \{0.134913961296 0.0347174412813\} dwxy \{0.321683289449 0.337673447208\} dst_colorspace_name \{REDcolor\}\}" colorspace/REDcolor2 "knobs this \{drxy \{0.878682510476 0.32496400741\} dgxy \{0.300888714367 0.679054755791\} dbxy \{0.0953986946056 -0.0293793268343\} dwxy \{0.321683289449 0.337673447208\} dst_colorspace_name \{REDcolor2\}\}" colorspace/REDcolor3 "knobs this \{drxy \{0.701181035906 0.329014155583\} dgxy \{0.300600304652 0.683788834269\} dbxy \{0.108154455624 -0.00868817578666\} dwxy \{0.321683210353 0.337673610062\} dst_colorspace_name \{REDcolor3\}\}" colorspace/REDcolor4 "knobs this \{drxy \{0.701180591892 0.329013699116\} dgxy \{0.300600395529 0.683788824257\} dbxy \{0.145331946229 0.0516168036226\} dwxy \{0.321683289449 0.337673447208\} dst_colorspace_name \{REDcolor4\}\}" colorspace/REDWideGamutRGB "knobs this \{drxy \{0.780308 0.304253\} dgxy \{0.121595 1.493994\} dbxy \{0.095612 -0.084589\} dwxy \{0.3127 0.3290\} dst_colorspace_name \{REDWideGamutRGB\}\}" colorspace/GoProProtune "knobs this \{drxy \{0.69848046 0.19302645\} dgxy \{0.32955538 1.02459662\} dbxy \{0.10844263 -0.03467857\} dwxy \{0.3127 0.329\} dst_colorspace_name \{GoProProtune\}\}" colorspace/CanonCinemaGamut "knobs this \{drxy \{0.74 0.27\} dgxy \{0.17 1.14\} dbxy \{0.08 -0.1\} dwxy \{0.3127 0.329\} dst_colorspace_name \{CanonCinemaGamut\}\}" colorspace/SonySGamut "knobs this \{drxy \{0.73 0.28\} dgxy\{0.14 0.855\} dbxy \{0.1 -0.05\} dwxy \{0.3127 0.329\} dst_colorspace_name \{SonySGamut\}\}" colorspace/SonySGamut3Cine "knobs this \{drxy \{0.766 0.275\} dgxy \{0.225 0.8\} dbxy \{0.089 -0.087\} dwxy \{0.3127 0.329\} dst_colorspace_name \{SonySGamut3Cine\}\}" colorspace/PanasonicVGamut "knobs this \{drxy \{0.730 0.280\} dgxy \{0.165 0.840\} dbxy \{0.100 -0.030\} dwxy \{0.3127 0.3290\} dst_colorspace_name \{PanasonicVGamut\}\}" colorspace/XYZ "knobs this \{drxy \{0 0\} dgxy \{0 0\} dbxy \{0 0\} dwxy \{0 0\} dst_colorspace_name \{XYZ\}\}"}}
+ addUserKnob {41 drxy l r T _knobchanged_.drxy}
+ addUserKnob {41 dgxy l g T _knobchanged_.dgxy}
+ addUserKnob {41 dbxy l b T _knobchanged_.dbxy}
+ addUserKnob {41 dwxy l w T _knobchanged_.dwxy}
+ addUserKnob {1 dst_colorspace_name l dst +DISABLED}
+ dst_colorspace_name ACEScg
+ addUserKnob {26 ""}
+ addUserKnob {26 chromatic_adaptation_label l " " T "<b>Chromatic Adaptation</b>"}
+ addUserKnob {41 cat_method l method T _knobchanged_.cat_method}
+ addUserKnob {26 ""}
+ addUserKnob {41 invert T _knobchanged_.invert}
+ addUserKnob {22 create_matrix_node l "Create Matrix" t "Create ColorMatrix node with the current values." T "node = nuke.thisNode()\nnode\['calculate_matrix'].execute()\nnuke.root().begin()\n_ = \[n.setSelected(False) for n in nuke.allNodes(recurseGroups=True)]\nm = nuke.createNode('ColorMatrix')\nm\['matrix'].setValue(node\['matrix'].getValue())\nm.setXYpos(node.xpos()-120, node.ypos())\nm\['label'].setValue(node\['label'].getValue())" +STARTLINE}
+ addUserKnob {41 matrix T ColorMatrix.matrix}
+ addUserKnob {22 clear l Clear T "n = nuke.thisNode()\nn\['matrix'].setValue(\[1,0,0,0,1,0,0,0,1])\nn\['label'].setValue('')" +STARTLINE}
+ addUserKnob {22 show_matrix l Show t "Show matrix values in a popup window for copying." T "node = nuke.thisNode()\nshow_4x4 = node\['show_matrix_4x4'].getValue()\nshow_commas = node\['show_matrix_commas'].getValue()\n\nif show_commas:\n    sep = ', '\nelse:\n    sep = ' '\n\nmtx = \[format(i, '.8f') for i in node\['matrix'].getValue()]\n\nif show_4x4:\n    z = \['0']\n    mtx = mtx\[0:3] + z + mtx\[3:6] + z + mtx\[6:9] + z*4 + \['1']\n\nnuke.message(sep.join(mtx))" +STARTLINE}
+ addUserKnob {6 show_matrix_4x4 l "show 4x4" t "present values in a 4x4 matrix (useful for ocio)" -STARTLINE}
+ addUserKnob {6 show_matrix_commas l "show comma sep" t "show matrix comma separated." -STARTLINE}
+ addUserKnob {22 save_spimtx l "Save spimtx" T "# inspired by ColorMatrixPlus by hpd\ndef write_spimtx(mtx_node, spimtx_file):\n    mtx_vals = mtx_node\['matrix'].getValue()\n    with open(spimtx_file, \"w\") as f:\n        f.write( \"%3.6f %3.6f %3.6f 0.0\\n\" % (\n            mtx_vals\[0], mtx_vals\[1], mtx_vals\[2]) )\n        f.write( \"%3.6f %3.6f %3.6f 0.0\\n\" % (\n            mtx_vals\[3], mtx_vals\[4], mtx_vals\[5]) )\n        f.write( \"%3.6f %3.6f %3.6f 0.0\\n\" % (\n            mtx_vals\[6], mtx_vals\[7], mtx_vals\[8]) )\n\nnode = nuke.thisNode()\nfilepath = nuke.getFilename('Save Matrix', '*.spimtx')\n\nif filepath:\n    if not filepath.endswith('.spimtx'):\n        filepath = filepath + '.spimtx'\n    write_spimtx(node, filepath)" +STARTLINE}
+ addUserKnob {22 load_spimtx l "Load spimtx" -STARTLINE T "# Inspired by ColorMatrixPlus by hpd\ndef load_spimtx(spimtx, mtx_node):\n    with open( spimtx, 'r') as file:\n        lines = file.readlines()\n    matrix_values = list()\n    for line in lines:\n        matrix_values.extend( map(float, line.strip().split(' ')\[0:3]) )\n    mtx_node\['matrix'].setValue(matrix_values)\n\nspimtx = nuke.getFilename('Load SPIMTX', '*.spimtx')\nif spimtx:\n    load_spimtx( spimtx, nuke.thisNode() )\n"}
+}
+ Input {
+  inputs 0
+  name Input
+  xpos -40
+  ypos 206
+ }
+ Dot {
+  name _knobchanged_
+  knobChanged "import nuke\nfloat2 = nuke.math.Vector2\nfloat3 = nuke.math.Vector3\nfloat3x3 = nuke.math.Matrix3\n\nCONE_RESP_MAT_BRADFORD = float3x3()\nCONE_RESP_MAT_CAT02 = float3x3()\nCONE_RESP_MAT_VONKRIES = float3x3()\nCONE_RESP_MAT_SHARP = float3x3()\nCONE_RESP_MAT_CMCCAT2000 = float3x3()\n\n# From ACESlib.Utilities_Color : 166\nCONE_RESP_MAT_BRADFORD.set(0.89510, -0.75020,  0.03890, 0.26640,  1.71350, -0.06850, -0.16140,  0.03670,  1.02960)\nCONE_RESP_MAT_CAT02.set(0.73280, -0.70360,  0.00300, 0.42960,  1.69750,  0.01360, -0.16240, 0.00610, 0.98340)\n\n# https://web.stanford.edu/~sujason/ColorBalancing/adaptation.html\n# from S. Bianco. \"Two New von Kries Based Chromatic Adapatation Transforms Found by Numerical Optimization.\"\nCONE_RESP_MAT_VONKRIES.set(0.40024, -0.2263, 0, 0.7076, 1.16532, 0, -0.08081, 0.0457, 0.91822)\nCONE_RESP_MAT_SHARP.set(1.2694, -0.8364, 0.0297, -0.0988, 1.8006, -0.0315, -0.1706, 0.0357, 1.0018)\nCONE_RESP_MAT_CMCCAT2000.set(0.7982, -0.5918, 0.0008, 0.3389, 1.5512, 0.239, -0.1371, 0.0406, 0.9753)\n\n\ndef transpose(mtx):\n    # transpose (swap rows to columns) of a 3x3 matrix\n    order = \[0, 3, 6, 1, 4, 7, 2, 5, 8]\n    omtx = float3x3()\n    for i in xrange(9):\n        omtx\[i] = mtx\[order\[i]]\n    return omtx\n\ndef mult_f33_f33(A, B):\n    # Calculate multiplication of 3x3 matrix A and 3x3 matrix B\n    C = float3x3()\n    C.makeIdentity()\n\n    # Row 1\n    C\[0] = (A\[0]*B\[0] + A\[1]*B\[3] + A\[2]*B\[6])\n    C\[1] = (A\[0]*B\[1] + A\[1]*B\[4] + A\[2]*B\[7])\n    C\[2] = (A\[0]*B\[2] + A\[1]*B\[5] + A\[2]*B\[8])\n    # Row 2\n    C\[3] = (A\[3]*B\[0] + A\[4]*B\[3] + A\[5]*B\[6])\n    C\[4] = (A\[3]*B\[1] + A\[4]*B\[4] + A\[5]*B\[7])\n    C\[5] = (A\[3]*B\[2] + A\[4]*B\[5] + A\[5]*B\[8])\n    # Row 3\n    C\[6] = (A\[6]*B\[0] + A\[7]*B\[3] + A\[8]*B\[6])\n    C\[7] = (A\[6]*B\[1] + A\[7]*B\[4] + A\[8]*B\[7])\n    C\[8] = (A\[6]*B\[2] + A\[7]*B\[5] + A\[8]*B\[8])\n\n    return C;\n\n\ndef mult_f3_f33(src, mtx):\n    return float3(mtx\[0] * src\[0] + mtx\[1] * src\[1] + \n    mtx\[2] * src\[2], mtx\[3] * src\[0] + mtx\[4] * src\[1] + \n    mtx\[5] * src\[2], mtx\[6] * src\[0] + mtx\[7] * src\[1] + \n    mtx\[8] * src\[2])\n\n\ndef XYZ_2_xyY(XYZ):\n    xyY = float3()\n    divisor = (XYZ\[0] + XYZ\[1] + XYZ\[2])\n    if (divisor == 0.):\n        divisor = 1e-10\n    xyY.set(XYZ\[0] / divisor, XYZ\[1] / divisor, XYZ\[1])\n    return xyY\n\n\ndef xyY_2_XYZ(xyY):\n    XYZ = float3()\n    XYZ.set(\n        xyY\[0] * xyY\[2] / max( xyY\[1], 1e-10), \\\n        xyY\[2], \\\n        (1.0 - xyY\[0] - xyY\[1]) * xyY\[2] / max( xyY\[1], 1e-10)\n        )\n    return XYZ\n\n\ndef calculate_cat_matrix(src_xy, des_xy, coneRespMat=CONE_RESP_MAT_BRADFORD):\n    # Calculates and returns a 3x3 Von Kries chromatic adaptation transform \n    # from src_xy to des_xy using the cone response primaries defined \n    # by coneRespMat. By default, coneRespMat is set to CONE_RESP_MAT_BRADFORD. \n    # The default coneRespMat can be overridden at runtime. \n\n    src_xyY = float3(src_xy\[0], src_xy\[1], 1.0)\n    des_xyY = float3(des_xy\[0], des_xy\[1], 1.0)\n\n    src_XYZ = xyY_2_XYZ( src_xyY )\n    des_XYZ = xyY_2_XYZ( des_xyY )\n\n    src_coneResp = mult_f3_f33(src_XYZ, coneRespMat)\n    des_coneResp = mult_f3_f33(des_XYZ, coneRespMat)\n\n    vkMat = float3x3()\n    vkMat.set(\n        des_coneResp\[0] / src_coneResp\[0], 0.0, 0.0,\n        0.0, des_coneResp\[1] / src_coneResp\[1], 0.0,\n        0.0, 0.0, des_coneResp\[2] / src_coneResp\[2]\n        )\n\n    cat_matrix = float3x3()\n    coneRespMatInv = coneRespMat.inverse()\n    cat_matrix = coneRespMat * ( vkMat * coneRespMatInv)\n    \n    return cat_matrix\n\n\ndef RGBtoXYZ(xy, Y=1.0, inverse=False):\n    # given r g b chromaticities and whitepoint, convert RGB colors to XYZ\n    # based on CtlColorSpace.cpp from the CTL source code : 77\n    # param: xy - dict of chromaticity xy coordinates: rxy: float2(x, y) etc\n    # param: Y - luminance of \"white\" - defaults to 1.0\n    # param: inverse - calculate XYZ to RGB instead\n    r = xy\['rxy']\n    g = xy\['gxy']\n    b = xy\['bxy']\n    w = xy\['wxy']\n\n    X = w.x * Y / w.y\n    Z = (1 - w.x - w.y) * Y / w.y\n\n    # Scale factors for matrix rows\n    d = r.x * (b.y - g.y) + b.x * (g.y - r.y) + g.x * (r.y - b.y)\n\n    Sr =    (X * (b.y - g.y) -      \\\n            g.x * (Y * (b.y - 1) +  \\\n            b.y  * (X + Z)) +       \\\n            b.x  * (Y * (g.y - 1) + \\\n            g.y * (X + Z))) / d\n    \n    Sg =    (X * (r.y - b.y) +      \\\n            r.x * (Y * (b.y - 1) +  \\\n            b.y * (X + Z)) -        \\\n            b.x * (Y * (r.y - 1) +  \\\n            r.y * (X + Z))) / d\n\n    Sb =    (X * (g.y - r.y) -      \\\n            r.x * (Y * (g.y - 1) +  \\\n            g.y * (X + Z)) +        \\\n            g.x * (Y * (r.y - 1) +  \\\n            r.y * (X + Z))) / d\n\n    # Assemble the matrix\n    M = float3x3()\n    M.set(  Sr * r.x, Sr * r.y, Sr * (1 - r.x - r.y),\n            Sg * g.x, Sg * g.y, Sg * (1 - g.x - g.y),\n            Sb * b.x, Sb * b.y, Sb * (1 - b.x - b.y))\n    if inverse:\n        M = M.inverse()\n        return M\n    else:\n        return M\n\n\ndef get_primaries(node, dst=False):\n    # get colorspace chromaticities xy coordinates from node\n    dst_pri = \['drxy', 'dgxy', 'dbxy', 'dwxy']\n    pri = \['rxy', 'gxy', 'bxy', 'wxy']\n    d = \{\}\n    for i, p in enumerate(pri):\n        if dst:\n            d\[p] = float2(node\[dst_pri\[i]].getValue()\[0], node\[dst_pri\[i]].getValue()\[1])\n        else:\n            d\[p] = float2(node\[p].getValue()\[0], node\[p].getValue()\[1])\n    return d\n\n\n\ndef start():\n    node = nuke.thisGroup()\n    \n    identity_mtx = float3x3()\n    identity_mtx.makeIdentity()\n\n    invert = node\['invert'].getValue()\n    label = node\['label']\n    cat_method = node\['cat_method'].value()\n    src_primaries = get_primaries(node)\n    dst_primaries = get_primaries(node, dst=True)\n    src_colorspace_name = node\['src_colorspace_name'].getValue()\n    dst_colorspace_name = node\['dst_colorspace_name'].getValue()\n    \n    # Check for XYZ on src / destination\n    enable_src = (src_colorspace_name != 'XYZ')\n    enable_dst = (dst_colorspace_name != 'XYZ')\n    whitepoint_changed = (src_primaries\['wxy']\[0] != dst_primaries\['wxy']\[0] or src_primaries\['wxy']\[1] != dst_primaries\['wxy']\[1])\n\n    # Get chromatic adaptation method\n    if cat_method == 'Bradford':\n        coneRespMat = CONE_RESP_MAT_BRADFORD\n    elif cat_method == 'cat02':\n        coneRespMat = CONE_RESP_MAT_CAT02\n    elif cat_method == 'vonKries Hunt-Pointer-Estevez D65-Normalized':\n        coneRespMat = CONE_RESP_MAT_VONKRIES\n    elif cat_method == 'cmccat2000':\n        coneRespMat = CONE_RESP_MAT_CMCCAT2000\n    elif cat_method == 'sharp':\n        coneRespMat = CONE_RESP_MAT_SHARP\n    elif cat_method == 'None':\n        coneRespMat = identity_mtx\n        whitepoint_changed = False\n\n    if enable_src:\n        # Calculate Source RGB to XYZ matrix\n        src_rgb_to_xyz_mtx = RGBtoXYZ(src_primaries)\n\n    if enable_dst:\n        # Calculate Destination XYZ to RGB matrix\n        dst_xyz_to_rgb_mtx = RGBtoXYZ(dst_primaries, inverse=True)\n\n    if enable_src and not enable_dst:\n        # Convert from Source RGB to XYZ only\n        mtx = src_rgb_to_xyz_mtx\n\n    if enable_dst and not enable_src:\n        # Convert from XYZ to Destination RGB only\n        mtx = dst_xyz_to_rgb_mtx\n\n    if enable_src and enable_dst:\n        if whitepoint_changed:\n            # Calculate chromatic adaptation matrix\n            cat_mtx = calculate_cat_matrix(src_primaries\['wxy'], dst_primaries\['wxy'], coneRespMat=coneRespMat)\n            # We will use our own matrix multiplication algorithm since there seems to be precision issues with the nuke.math module :/\n            # mtx = (cat_mtx * src_rgb_to_xyz_mtx) * dst_xyz_to_rgb_mtx\n            mtx = mult_f33_f33(dst_xyz_to_rgb_mtx, mult_f33_f33(cat_mtx, src_rgb_to_xyz_mtx))\n        else:\n            mtx = mult_f33_f33(dst_xyz_to_rgb_mtx, src_rgb_to_xyz_mtx)\n\n    if invert:\n        mtx = mtx.inverse()\n\n    node\['matrix'].setValue(mtx)\n\n    return True\n\n\n\nn = nuke.thisNode()\ng = nuke.thisGroup()\nk = nuke.thisKnob()\n\nstart()\n"
+  tile_color 0x5b0000
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -6
+  ypos 258
+  addUserKnob {20 Knobs}
+  addUserKnob {12 rxy l r t "Red xy chromaticity coordinates in CIE 1931 colorspace."}
+  rxy {0.7347 0.2653}
+  addUserKnob {12 gxy l g t "Green xy chromaticity coordinates in CIE 1931 colorspace."}
+  gxy {0 1}
+  addUserKnob {12 bxy l b t "Blue xy chromaticity coordinates in CIE 1931 colorspace."}
+  bxy {0.0001 -0.077}
+  addUserKnob {12 wxy l w t "Whitepoint xy chromaticity coordinates in CIE 1931 colorspace."}
+  wxy {0.32168 0.33767}
+  addUserKnob {12 drxy l r t "Red xy chromaticity coordinates in CIE 1931 colorspace."}
+  drxy {0.713 0.293}
+  addUserKnob {12 dgxy l g t "Green xy chromaticity coordinates in CIE 1931 colorspace."}
+  dgxy {0.165 0.83}
+  addUserKnob {12 dbxy l b t "Blue xy chromaticity coordinates in CIE 1931 colorspace."}
+  dbxy {0.128 0.044}
+  addUserKnob {12 dwxy l w t "Whitepoint xy chromaticity coordinates in CIE 1931 colorspace."}
+  dwxy {0.32168 0.33767}
+  addUserKnob {4 cat_method l method t "Choose the chromatic adaptation method for adapting whitepoint." M {Bradford cat02 "vonKries Hunt-Pointer-Estevez D65-Normalized" cmccat2000 sharp None}}
+  addUserKnob {6 invert t "Invert direction of matrix." +STARTLINE}
+ }
+ ColorMatrix {
+  matrix {
+      {1.451439381 -0.2365107685 -0.2149285674}
+      {-0.07655383646 1.176229835 -0.09967593104}
+      {0.008316127583 -0.0060324613 0.997716248}
+    }
+  name ColorMatrix
+  xpos -40
+  ypos 302
+ }
+ Output {
+  name Output
+  xpos -40
+  ypos 350
+ }
+end_group
+Group {
+ name VisualizeColorDistance11
+ selected true
+ xpos 7440
+ ypos 6830
+ addUserKnob {20 VisualizeColorDistance}
+ addUserKnob {4 type M {inside outside}}
+ addUserKnob {6 show_distance l "show distance" -STARTLINE}
+ show_distance true
+ addUserKnob {7 threshold t "threshold of color distance to visualize. 1.0 is the edge of the gamut boundary. 0.0 is all colors." R 0 1.2}
+ threshold 1
+ addUserKnob {7 shd_rolloff l "shd rolloff" R 0 0.1}
+ shd_rolloff 0.03
+ addUserKnob {4 bg t "choose bg to put behind result colors" M {checkerboard "solid color"}}
+ addUserKnob {41 color T Fill1.color}
+}
+ Input {
+  inputs 0
+  name Input
+  xpos -40
+  ypos -285
+ }
+ Dot {
+  name Dot1
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -6
+  ypos -174
+ }
+set N12fbbc60 [stack 0]
+ Dot {
+  name Dot2
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -116
+  ypos -174
+ }
+set N164fb290 [stack 0]
+ Dot {
+  name Dot5
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -226
+  ypos -174
+ }
+set N16500160 [stack 0]
+ Expression {
+  channel0 {rgba.red rgba.green rgba.blue none}
+  expr0 max(r,g,b)
+  name achromatic
+  note_font Helvetica
+  xpos -370
+  ypos -129
+ }
+set N16505060 [stack 0]
+push $N16500160
+ Merge2 {
+  inputs 2
+  operation minus
+  bbox B
+  Achannels rgb
+  Bchannels rgb
+  output rgb
+  name Merge2
+  note_font Helvetica
+  xpos -260
+  ypos -129
+ }
+push $N16505060
+ Expression {
+  temp_name0 c_r
+  temp_expr0 1-r
+  temp_name1 c_g
+  temp_expr1 1-g
+  temp_name2 c_b
+  temp_expr2 1-b
+  expr0 1-(c_r<(1-thr)?c_r:(1-thr)+thr*tanh(((c_r-(1-thr))/thr)))
+  expr1 1-(c_g<(1-thr)?c_g:(1-thr)+thr*tanh(((c_g-(1-thr))/thr)))
+  expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
+  name toe
+  note_font Helvetica
+  xpos -370
+  ypos -81
+  disable {{parent.shd_rolloff==0}}
+  addUserKnob {20 Params_tab l Params}
+  addUserKnob {7 thr t "complement of threshold"}
+  thr {{parent.shd_rolloff}}
+ }
+ Merge2 {
+  inputs 2
+  operation divide
+  bbox B
+  Achannels rgb
+  Bchannels rgb
+  output rgb
+  name Merge3
+  note_font Helvetica
+  xpos -260
+  ypos -81
+ }
+set N16531310 [stack 0]
+ Dot {
+  name Dot4
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -226
+  ypos 66
+ }
+push $N16531310
+push $N164fb290
+ MergeExpression {
+  inputs 2
+  temp_name0 limit
+  temp_expr0 threshold
+  temp_name1 sat
+  temp_expr1 max(Ar,Ag,Ab)
+  expr0 type?(sat>=limit?Br:0):sat<=limit?Br:0
+  expr1 type?(sat>=limit?Bg:0):sat<=limit?Bg:0
+  expr2 type?(sat>=limit?Bb:0):sat<=limit?Bb:0
+  expr3 type?(sat>limit?1:0):sat<limit?1:0
+  name MergeExpression1
+  note_font Helvetica
+  xpos -150
+  ypos -81
+ }
+ Dot {
+  name Dot3
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -116
+  ypos -30
+ }
+push $N12fbbc60
+ Fill {
+  output rgb
+  color 0.18
+  name Fill1
+  note_font Helvetica
+  xpos -40
+  ypos -129
+ }
+ CheckerBoard2 {
+  inputs 0
+  color0 0.1000000015
+  color1 {{parent.color} {parent.color} {parent.color} {parent.color}}
+  color2 {{color0} {color0} {color0} {color0}}
+  color3 {{color1} {color1} {color1} {color1}}
+  linecolor 0
+  centerlinewidth 0
+  name CheckerBoard1
+  note_font Helvetica
+  xpos 70
+  ypos -129
+  postage_stamp false
+ }
+ Reformat {
+  type "to box"
+  box_width {{parent.input.width}}
+  box_height {{parent.input.height}}
+  box_fixed true
+  resize fill
+  name ReformatBox
+  xpos 70
+  ypos -82
+ }
+ Switch {
+  inputs 2
+  which {{parent.bg}}
+  name Switch1
+  note_font Helvetica
+  xpos -40
+  ypos -81
+ }
+ Merge2 {
+  inputs 2
+  bbox B
+  name Merge1
+  note_font Helvetica
+  xpos -40
+  ypos -33
+ }
+ Switch {
+  inputs 2
+  which {{parent.show_distance}}
+  name switch_distance
+  note_font Helvetica
+  xpos -40
+  ypos 63
+ }
+ Output {
+  name Output
+  xpos -40
+  ypos 110
+ }
+end_group
+Group {
+ name MaxRGB5
+ label "<pre><b>R</b> : \[value rmax]\n<b>G</b> : \[value gmax]\n<b>B</b> : \[value bmax]"
+ note_font Helvetica
+ selected true
+ xpos 7440
+ ypos 6869
+ addUserKnob {20 MaxRGB_tab l MaxRGB}
+ addUserKnob {22 calculate t "calculate the max pixel value in red, green, and blue color components." T "def get_max(ct_node, frame):\n    ch = ct_node.name().lower()\[0]\n    nuke.execute(ct_node, frame, frame)\n    maxval = max(ct_node\['maxlumapixvalue'].getValue())\n    kmax = n\['\{0\}max'.format(ch)]\n    kpos = n\['\{0\}pos'.format(ch)]\n    kmax.setValueAt(maxval, frame)\n    for i in range(2):\n        kpos.setValueAt(ct_node\['maxlumapixdata'].getValue()\[i], frame, i)\n    \n\nn = nuke.thisNode()\ncurframe = n\['curframe'].getValue()\nif curframe:\n    first_frame = nuke.frame()\n    last_frame = nuke.frame()\nelse:\n    first_frame = n.frameRange().first()\n    last_frame = n.frameRange().last()\n\nct_nodes = \[nuke.toNode('\{0\}.\{1\}MAX'.format(n.fullName(), c)) for c in \['R', 'G', 'B']]\n\nfor ch in \[c.name().lower()\[0] for c in ct_nodes]:\n    kmax = n\['\{0\}max'.format(ch)]\n    kpos = n\['\{0\}pos'.format(ch)]\n    for k in \[kmax, kpos]:\n        k.clearAnimated()\n        if not curframe:\n            k.setAnimated()\n\nif curframe:\n    for ct_node in ct_nodes:\n        get_max(ct_node, first_frame)\n\n#else: # threading issues... not implemented for now\n#    for frame in range(first_frame, last_frame+1):\n#        for ct_node in ct_nodes:\n#            threading.Thread(group=None, target=get_max, args=(ct_node, frame)).start()" +STARTLINE}
+ addUserKnob {22 clear -STARTLINE T "n = nuke.thisNode()\nfor c in \['r', 'g', 'b']:\n    kmax =  n\['\{0\}max'.format(c)]\n    kpos = n\['\{0\}pos'.format(c)]\n    for k in \[kmax, kpos]:\n        k.setValue(0)\n        k.clearAnimated()"}
+ addUserKnob {6 curframe l "current frame" t "Calculate only the current frame. If false, will prompt calculate input framerange." -STARTLINE}
+ curframe true
+ addUserKnob {7 rmax t "maximum red value" R 0 50}
+ rmax 1.215420485
+ addUserKnob {12 rpos l "" t "rmax position" -STARTLINE}
+ rpos {2 0}
+ addUserKnob {7 gmax t "maximum green value" R 0 50}
+ gmax 1.09990406
+ addUserKnob {12 gpos l "" t "gmax position" -STARTLINE}
+ gpos {2 0}
+ addUserKnob {7 bmax t "maximum blue value" R 0 50}
+ bmax 1.005128622
+ addUserKnob {12 bpos l "" t "bmax position" -STARTLINE}
+ bpos {1 0}
+}
+ Input {
+  inputs 0
+  name Input
+  xpos -40
+  ypos -10
+ }
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {rgba.red -rgba.green -rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve x1 209 209 209 2 513 513 513 513 513 385 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 2 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513 513} {curve x1 1175 1175 1175 0 994 994 994 994 994 686 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 0 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994 994}}
+  maxlumapixvalue {{curve x1 1.03131032 1.361329675 1.03131032 1.215420485 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 1.016959906 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 1.059028029 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962 37.13138962} {curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} 0}
+  minlumapixdata {{curve x1 1 1 1 0 389 389 389 389 389 998 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 0 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389} {curve x1 0 0 0 0 1040 1040 1040 1040 1040 210 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 0 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040}}
+  minlumapixvalue {{curve x1 0 0 0 0 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 0 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 0 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463 -0.4703712463} {curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} 0}
+  name RMAX
+  tile_color 0x84000000
+  note_font Helvetica
+  xpos -40
+  ypos 39
+ }
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {-rgba.red rgba.green -rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve x1 894 50 50 2 1347 1347 1347 1347 1347 259 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 1347 x48 2} {curve x1 1274 9 9 0 896 896 896 896 896 459 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 896 x48 0}}
+  maxlumapixvalue {{curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 x48 0} {curve x1 1.143916965 1.778251767 1.347160339 1.09990406 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 1.138906717 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 39.63381577 x48 1.201209426} {curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 x48 0}}
+  minlumapixdata {{curve x1 0 0 0 1 389 389 389 389 389 1234 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 389 x48 1} {curve x1 0 0 0 0 1040 1040 1040 1040 1040 220 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 1040 x48 0}}
+  minlumapixvalue {{curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 x48 0} {curve x1 0 0 0 0 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 0 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 -2.469618797 x48 0} {curve x1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 x48 0}}
+  name GMAX
+  tile_color 0x84000000
+  note_font Helvetica
+  xpos -40
+  ypos 87
+ }
+ CurveTool {
+  operation "Max Luma Pixel"
+  channels {-rgba.red -rgba.green rgba.blue none}
+  ROI {0 0 {width} {height}}
+  autocropdata {480 270 1440 810}
+  maxlumapixdata {{curve x1 531 7 7 1 x10 1235 x48 1} {curve x1 985 41 41 0 x10 221 x48 0}}
+  maxlumapixvalue {{curve x1 0 0 0 0 x10 0 x48 0} {curve x1 0 0 0 0 x10 0 x48 0} {curve x1 0.9455359578 1.744389296 1.321506977 1.005128622 x10 1.041050911 x48 1.24509275}}
+  minlumapixdata {{curve x1 3 3 3 2 x10 0 x48 2} {curve x1 0 0 0 0 x10 0 x48 0}}
+  minlumapixvalue {{curve x1 0 0 0 0 x10 0 x48 0} {curve x1 0 0 0 0 x10 0 x48 0} {curve x1 0 0 0 0 x10 0 x48 0}}
+  name BMAX
+  tile_color 0x84000000
+  note_font Helvetica
+  xpos -40
+  ypos 135
+ }
+ Output {
+  name Output
+  xpos -40
+  ypos 182
+ }
+end_group
