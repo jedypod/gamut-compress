@@ -6,38 +6,38 @@ This is written assuming you have read and understand the [how it works document
 # Goals Usages Needs
 The needs of a tool depends on the context in which it is used. I see 3 main contexts in which gamut compression could be used: ( there may be more)
 
-- **VFX Vendor**
-    + Goal
-        * Remove problematic negative RGB color components to reduce issues with image manipulation.
-    + Usage
-        * Gamut compression applied to plates on ingest, reversed on delivery.
-    + Needs  
-        * Exact inverse transform.
-        * Plausible color rendering to enable good decision making in image manipulation.
-        * Fine control and ability to optimize and customize for a specific circumstance. Per source camera, per sequence, or even per shot if needed.
-        * Tools for calculating and visualizing distances of source images or source gamuts, to aid in customization and optimization.  
+**VFX Vendor**
++ Goal
+    * Remove problematic negative RGB color components to reduce issues with image manipulation.
++ Usage
+    * Gamut compression applied to plates on ingest, reversed on delivery.
++ Needs  
+    * Exact inverse transform.
+    * Plausible color rendering to enable good decision making in image manipulation.
+    * Fine control and ability to optimize and customize for a specific circumstance. Per source camera, per sequence, or even per shot if needed.
+    * Tools for calculating and visualizing distances of source images or source gamuts, to aid in customization and optimization.  
 
-- **DI Suite**
-    + Goal
-        * To creatively manipulate out of gamut colors into a pleasing result.
-    + Usage
-        * Applied in a creative look-driven context for final image output.
-    + Needs
-        * Creative flexibility.
-        * Intuitive parameters.
-        * Plausible, good looking result.
-        * Exact inverse transform not needed in most circumstances since this transform would be applied prior to final output. However it might might be necessary for collaboration with a VFX facility.
+**DI Suite**
++ Goal
+    * To creatively manipulate out of gamut colors into a pleasing result.
++ Usage
+    * Applied in a creative look-driven context for final image output.
++ Needs
+    * Creative flexibility.
+    * Intuitive parameters.
+    * Plausible, good looking result.
+    * Exact inverse transform not needed in most circumstances since this transform would be applied prior to final output. However it might might be necessary for collaboration with a VFX facility.
 
-- **Display Rendering Transform**
-    + Goal  
-    To aide in the rendering of out of gamut colors on a display.
-    + Usage  
-    Applied in scene-referred space before the display rendering transform.  
-    (This algorithm only works in scene-referred, and is not suitable for more complex display-referred gamut mapping).
-    + Needs
-        * Handle any and all possible source imagery.
-        * Plausible good looking result.
-        * No exposed or adjustable parameters.
+**Display Rendering Transform**
++ Goal  
+To aide in the rendering of out of gamut colors on a display.
++ Usage  
+Applied in scene-referred space before the display rendering transform.  
+(This algorithm only works in scene-referred, and is not suitable for more complex display-referred gamut mapping).
++ Needs
+    * Handle any and all possible source imagery.
+    * Plausible good looking result.
+    * No exposed or adjustable parameters.
 
 With that outline of possible goals and needs, we will now talk about how to use the tool, and make some workflow reccomendations.
 
@@ -45,11 +45,12 @@ With that outline of possible goals and needs, we will now talk about how to use
 
 # Parameters
 ![GamutCompress Nuke UI](/images/screenshots/GamutCompress_nuke-ui.png)
+
 Here is a description of what each of the GamutCompress parameters do.
 
 
 ## Threshold
-Treshold controls the percentage of the outer gamut to affect. A value of 0.2 will compress out of gamut values into the outer 20% of the gamut. The inner 80% of the gamut core will not be affected. In the Nuke nodes you are able to adjust these per color component. For example if you wanted to protect reds and greens a little more than blue, you could set the threshold a bit higher for blue.  
+Treshold controls the percentage of the outer gamut to affect. A value of 0.2 will compress out of gamut values into the outer 20% of the gamut. The inner 80% of the gamut core will not be affected. In the Nuke nodes you are able to adjust these per color component. For example if you wanted to protect reds and greens a little more than blue, you could set the threshold a bit higher for blue.
 
 
 ## Power
