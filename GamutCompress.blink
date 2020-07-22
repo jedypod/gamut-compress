@@ -9,49 +9,185 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     float cyan;
     float magenta;
     float yellow;
+    int method;
+    bool hexagonal;
     bool invert;
 
   local:
-    float3 thr;
-    float3 lim;
+  float3 thr;
+  float3 lim;
+  float pi;
 
   void init() {
+    pi = 3.14159265359;
+
     // thr is the percentage of the core gamut to protect: the complement of threshold.
     thr = float3(1.0f-threshold.x, 1.0f-threshold.y, 1.0f-threshold.z);
 
-    // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
-    // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).
-    lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
+    // lim is the max distance from the gamut boundary that will be compressed
+    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
+    // if method is Reinhard or Power, use the limit as-is
+    if (method == 1 || method == 2) {
+      lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
+    } else {
+      // otherwise, we have to bruteforce the value of limit 
+      // such that lim is the value of x where y=1.0f
+      // importantly, this runs once at the beginning of evaluation, NOT per-pixel!!!
+      lim = float3(
+        bisect(max(0.0001f, cyan)+1.0f, thr.x),
+        bisect(max(0.0001f, magenta)+1.0f, thr.y),
+        bisect(max(0.0001f, yellow)+1.0f, thr.z));
+    }
   }
 
   // calculate hyperbolic tangent
   float tanh( float in) {
     float f = exp(2.0f*in);
-    return (f-1.0f)/(f+1.0f);
+    return (f-1.0f) / (f+1.0f);
   }
+
+  // calculate inverse hyperbolic tangent
+  float atanh( float in) {
+    return log((1.0f+in)/(1.0f-in))/2.0f;
+  }
+
+  // compression function which gives the y=1 x intersect at y=0
+  float f(float x, float k, float t) {
+    if (method == 0) {
+      // natural logarithm compression method
+      return (exp((1.0f-t+t*log(1.0f-x)-x*t*log(1.0f-x))/(t*(1.0f-x))))*t+x*t-k;
+    } else if (method == 1 || method == 2) {
+      return k;
+    } else if (method == 3) { 
+      // natural exponent compression method
+      return -log((-x+1.0f)/(t-x))*(-t+x)+t-k;
+    } else if (method == 4) {
+      // arctangent compression method
+      return (2*tan( (pi*(1.0f-t))/(2.0f*(x-t)))*(x-t))/pi+t-k;
+    } else if (method == 5) {
+      // hyperbolic tangent compression method
+      return atanh((1.0f-t)/(x-t))*(x-t)+t-k;
+    }
+  }
+
+  int _sign(float x) {
+    return x == 0.0f ? 0.0f : x > 0.0f ? 1.0f : 0.0f;
+  }
+
+  float bisect(float k, float t) {
+    // use a simple bisection algorithm to bruteforce the root of f
+    // returns an approximation of the value of limit 
+    // such that the compression function intersects y=1 at desired value k
+    // this allows us to specify the max distance we will compress to the gamut boundary
+    
+    float a, b, c, y;
+    float tol = 0.0001f; // accuracy of estimate
+    int nmax = 100; // max iterations
+
+    // set up reasonable initial guesses for each method given output ranges of each function
+    if (method == 0) {
+      // natural logarithm needs a limit between -inf (linear), and 1 (clip)
+      a = -15.0f;
+      b = 0.98f;
+    } else if (method == 5) {
+      // tanh needs more precision
+      a = 1.000001f;
+      b = 5.0f;
+    } else {
+      a = 1.0001f;
+      b = 5.0f;
+    }
+
+    if (_sign(f(a, k, t)) == _sign(f(b, k, t))) {
+      // bad estimate. return something close to linear
+      if ((method == 0) || (method == 2)) {
+        return -100.0f;
+      } else {
+        return 1.999999f;
+      }
+    }
+    c = (a+b)/2.0f;
+    y = f(c, k, t);
+    if (fabs(y) <= tol) {
+      return c; // lucky guess
+    }
+
+    int n = 1;
+    while ((fabs(y) > tol) && (n <= nmax)) {
+      if (_sign(y) == _sign(f(a, k, t))) {
+        a = c;
+      } else {
+        b = c;
+      }
+      c = (a+b)/2.0f;
+      y = f(c, k, t);
+      n += 1;
+    }
+    return c;
+  }
+
 
   // calculate compressed distance
   float compress(float x, float l, float t) {
-    float cdist;
-    // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
-    float s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
-    if (l < 1.0001) {
-      return x; // disable compression, avoid nan
-    }
+    float cx, s;
     if (x < t) {
-      cdist = x;
+      cx = x;
     } else {
-      if (invert == 0) {
-        cdist = t+s*((x-t)/s)/(pow(1.0f+pow((x-t)/s,p),1.0f/p)); // compress
-      } else {
-        if (x > (t + s)) {
-          cdist = x; // avoid singularity
+      if (method == 0) {
+        // natural logarithm compression method: https://www.desmos.com/calculator/hmzirlw7tj
+        // inspired by ITU-R BT.2446 http://www.itu.int/pub/R-REP-BT.2446-2019
+        if (invert == 0) {
+          cx = t*log(x/t-l)-l*t*log(x/t-l)+t-t*log(1.0f-l)+l*t*log(1.0f-l);
+        } else {
+          cx = exp((x-t+t*log(1.0f-l)-l*t*log(1.0f-l))/(t*(1.0f-l)))*t+l*t;
         }
-        cdist = t+s*pow(-(pow((x-t)/s,p)/(pow((x-t)/s,p)-1.0f)),1.0f/p); // uncompress
+      } else if (method == 1) {
+        // simple Reinhard type compression method: https://www.desmos.com/calculator/lkhdtjbodx
+        if (invert == 0) {
+          cx = t+1.0f/(1.0f/(x-t)+1.0f/(1.0f-t)-1.0f/(l-t));
+        } else {
+          cx = t+1.0f/(1.0f/(x-t)-1.0f/(1.0f-t)+1.0f/(l-t));
+        }
+      } else if (method == 2) {
+        // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
+        if (l < 1.0001) {
+          return x; // disable compression, avoid nan
+        }
+        s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
+        if (invert == 0) {
+          cx = t+s*((x-t)/s)/(pow(1.0f+pow((x-t)/s,p),1.0f/p)); // compress
+        } else {
+          if (x > (t + s)) {
+            cx = x; // avoid singularity
+          }
+          cx = t+s*pow(-(pow((x-t)/s,p)/(pow((x-t)/s,p)-1.0f)),1.0f/p); // uncompress
+        }
+      } else if (method == 3) {
+        // natural exponent compression method: https://www.desmos.com/calculator/s2adnicmmr
+        if (invert == 0) {
+          cx = l-(l-t)*exp(-(((x-t)*((1.0f*l)/(l-t))/l)));
+        } else {
+          cx = -log((x-l)/(t-l))*(-t+l)/1.0f+t;
+        }
+      } else if (method == 4) {
+        // arctangent compression method: https://www.desmos.com/calculator/h96qmnozpo
+        if (invert == 0) {
+          cx = t+(l-t)*2/pi*atan(pi/2*(x-t)/(l-t));
+        } else {
+          cx = t+(l-t)*2/pi*tan(pi/2*(x-t)/(l-t));
+        }
+      } else if (method == 5) {
+        // hyperbolic tangent compression method: https://www.desmos.com/calculator/xiwliws24x
+        if (invert == 0) {
+          cx = t+(l-t)*tanh(((x-t)/(l-t)));
+        } else {
+          cx = t+(l-t)*atanh(x/(l-t)-t/(l-t));
+        }
       }
     }
-    return cdist;
+    return cx;
   }
+
 
   void process() {
     // source pixels
@@ -62,18 +198,31 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     float ach = max(rgb.x, max(rgb.y, rgb.z));
 
     // achromatic with shadow rolloff below shd_rolloff threshold
-    float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):
-      (1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
+    float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
 
     // distance from the achromatic axis for each color component aka inverse rgb ratios
-    // distance is normalized by achromatic, so that 1.0f is at gamut boundary. avoid 0 div
+    // distance is normalized by achromatic, so that 1.0f is at gamut boundary, avoid 0 div
     float3 dist = ach_shd == 0 ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;
 
-    // compress distance with parameterized compression function
-    float3 cdist = float3(
-      compress(dist.x, lim.x, thr.x),
-      compress(dist.y, lim.y, thr.y),
-      compress(dist.z, lim.z, thr.z));
+    // compress distance with user controlled parameterized shaper function
+    float sat;
+    float3 csat, cdist;
+    if (hexagonal) {
+      sat = max(dist.x, max(dist.y, dist.z));
+      csat = float3(
+        compress(sat, lim.x, thr.x),
+        compress(sat, lim.y, thr.y),
+        compress(sat, lim.z, thr.z));
+      cdist = sat == 0 ? dist : float3(
+        dist.x * csat.x / sat,
+        dist.y * csat.y / sat,
+        dist.z * csat.z / sat);
+    } else {
+      cdist = float3(
+        compress(dist.x, lim.x, thr.x),
+        compress(dist.y, lim.y, thr.y),
+        compress(dist.z, lim.z, thr.z));
+    }
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
