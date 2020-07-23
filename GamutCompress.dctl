@@ -93,8 +93,10 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   }
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
-  float3 thr;
-  thr = make_float3(_fmaxf(0.00001, 1.0f-threshold_r), _fmaxf(0.00001, 1.0f-threshold_g), _fmaxf(0.00001, 1.0f-threshold_b));
+  float3 thr = make_float3(
+    1.0f-_fmaxf(0.00001, threshold_r),
+    1.0f-_fmaxf(0.00001, threshold_g),
+    1.0f-_fmaxf(0.00001, threshold_b));
   
   // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
   // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).  

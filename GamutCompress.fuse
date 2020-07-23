@@ -172,39 +172,39 @@ end
 
 
 function Process(req)
-    local src = InImage:GetValue(req)
-    local dst = Image{ IMG_Like = src, IMG_DeferAlloc = true }
+  local src = InImage:GetValue(req)
+  local dst = Image{ IMG_Like = src, IMG_DeferAlloc = true }
 
-    if not req:IsPreCalc() then
-        local node = DVIPComputeNode(req, "SolidKernel", SolidKernel, "SolidParams", SolidParams)
-        local params = node:GetParamBlock(SolidParams)
+  if not req:IsPreCalc() then
+    local node = DVIPComputeNode(req, "SolidKernel", SolidKernel, "SolidParams", SolidParams)
+    local params = node:GetParamBlock(SolidParams)
 
-        params.hexagonal = InHexagonal:GetValue(req).Value
-        params.threshold_r = InThresholdR:GetValue(req).Value
-        params.threshold_g = InThresholdG:GetValue(req).Value
-        params.threshold_b = InThresholdB:GetValue(req).Value
-        params.power = InPower:GetValue(req).Value
-        params.shd_rolloff = InShdRolloff:GetValue(req).Value
-        params.cyan = InCyan:GetValue(req).Value
-        params.magenta = InMagenta:GetValue(req).Value
-        params.yellow = InYellow:GetValue(req).Value
-        params.invert = InInvert:GetValue(req).Value
-        params.srcCompOrder = src:IsMask() and 1 or 15
-     
-        node:SetParamBlock(params)
-     
-        node:AddInput("src", src)
-        node:AddOutput("dst", dst)
-     
-        local ok = node:RunSession(req)
-     
-        if not ok then
-            dst = nil
-        end
-
-    end
+    params.hexagonal = InHexagonal:GetValue(req).Value
+    params.threshold_r = InThresholdR:GetValue(req).Value
+    params.threshold_g = InThresholdG:GetValue(req).Value
+    params.threshold_b = InThresholdB:GetValue(req).Value
+    params.power = InPower:GetValue(req).Value
+    params.shd_rolloff = InShdRolloff:GetValue(req).Value
+    params.cyan = InCyan:GetValue(req).Value
+    params.magenta = InMagenta:GetValue(req).Value
+    params.yellow = InYellow:GetValue(req).Value
+    params.invert = InInvert:GetValue(req).Value
+    params.srcCompOrder = src:IsMask() and 1 or 15
  
-    OutImage:Set(req, dst)
+    node:SetParamBlock(params)
+ 
+    node:AddInput("src", src)
+    node:AddOutput("dst", dst)
+ 
+    local ok = node:RunSession(req)
+ 
+    if not ok then
+        dst = nil
+    end
+
+  end
+
+  OutImage:Set(req, dst)
 end
 
 
@@ -255,9 +255,9 @@ SolidKernel = [[
 
     // thr is the percentage of the core gamut to protect: the complement of threshold.
     float3 thr = make_float3(
-      _fmaxf(0.0001f, 1.0f-params->threshold_r),
-      _fmaxf(0.0001f, 1.0f-params->threshold_g),
-      _fmaxf(0.0001f, 1.0f-params->threshold_b));
+      1.0f-_fmaxf(0.0001f, params->threshold_r),
+      1.0f-_fmaxf(0.0001f, params->threshold_g),
+      1.0f-_fmaxf(0.0001f, params->threshold_b));
     
     // lim is the max distance from the gamut boundary that will be compressed
     // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary

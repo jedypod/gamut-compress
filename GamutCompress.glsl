@@ -93,7 +93,10 @@ void main() {
   } 
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
-  vec3 thr = vec3(max(0.00001, 1.0-threshold.x), max(0.00001, 1.0-threshold.y), max(0.00001, 1.0-threshold.z));
+  vec3 thr = vec3(
+    1.0-max(0.00001, threshold.x),
+    1.0-max(0.00001, threshold.y),
+    1.0-max(0.00001, threshold.z));
   
   // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
   // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).  
