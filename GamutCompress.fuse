@@ -98,11 +98,35 @@ function Create()
     {CCS_AddString = "tanh", },
   })
     
-  InThreshold = self:AddInput("threshold", "threshold", {
+  InHexagonal = self:AddInput("hexagonal", "hexagonal", {
+    LINKID_DataType = "Number",
+    INPID_InputControl = "CheckboxControl",
+    INP_MinAllowed = 0.0,
+    INP_MaxAllowed = 1.0,
+    INP_Default = 0.0,
+  })
+    
+  InThresholdR = self:AddInput("threshold_r", "threshold_r", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
     INP_Default = 0.2,
-    INP_MinAllowed = 0.0,
+    INP_MinAllowed = 0.0001,
+    INP_MaxScale = 0.6,
+  })
+
+  InThresholdG = self:AddInput("threshold_g", "threshold_g", {
+    LINKID_DataType = "Number",
+    INPID_InputControl = "SliderControl",
+    INP_Default = 0.2,
+    INP_MinAllowed = 0.0001,
+    INP_MaxScale = 0.6,
+  })
+
+  InThresholdB = self:AddInput("threshold_b", "threshold_b", {
+    LINKID_DataType = "Number",
+    INPID_InputControl = "SliderControl",
+    INP_Default = 0.2,
+    INP_MinAllowed = 0.0001,
     INP_MaxScale = 0.6,
   })
   
@@ -149,14 +173,6 @@ function Create()
   })
   
   self:EndControlNest()
-
-  InHexagonal = self:AddInput("hexagonal", "hexagonal", {
-    LINKID_DataType = "Number",
-    INPID_InputControl = "CheckboxControl",
-    INP_MinAllowed = 0.0,
-    INP_MaxAllowed = 1.0,
-    INP_Default = 0.0,
-  })
   
   InInvert = self:AddInput("invert", "invert", {
     LINKID_DataType = "Number",
@@ -187,13 +203,15 @@ function Process(req)
     local params = node:GetParamBlock(SolidParams)
 
     params.method = InMethod:GetValue(req).Value
+    params.hexagonal = InHexagonal:GetValue(req).Value
+    params.threshold_r = InThresholdR:GetValue(req).Value
+    params.threshold_g = InThresholdG:GetValue(req).Value
+    params.threshold_b = InThresholdB:GetValue(req).Value
     params.power = InPower:GetValue(req).Value
-    params.threshold = InThreshold:GetValue(req).Value
     params.shd_rolloff = InShdRolloff:GetValue(req).Value
     params.cyan = InCyan:GetValue(req).Value
     params.magenta = InMagenta:GetValue(req).Value
     params.yellow = InYellow:GetValue(req).Value
-    params.hexagonal = InHexagonal:GetValue(req).Value
     params.invert = InInvert:GetValue(req).Value
     params.srcCompOrder = src:IsMask() and 1 or 15
  
@@ -216,13 +234,15 @@ end
 
 SolidParams = [[
   int method;
-  float threshold;
+  int hexagonal;
+  float threshold_r;
+  float threshold_g;
+  float threshold_b;
   float power;
   float shd_rolloff;
   float cyan;
   float magenta;
   float yellow;
-  int hexagonal;
   int invert;
   int srcCompOrder;
 ]]
@@ -389,7 +409,10 @@ SolidKernel = [[
     }
 
     // thr is the percentage of the core gamut to protect: the complement of threshold.
-    float thr = 1.0f - params->threshold;
+    float3 thr = make_float3(
+      1.0f-_fmaxf(0.0001f, params->threshold_r),
+      1.0f-_fmaxf(0.0001f, params->threshold_g),
+      1.0f-_fmaxf(0.0001f, params->threshold_b));
     
     // lim is the max distance from the gamut boundary that will be compressed
     // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
@@ -404,9 +427,9 @@ SolidKernel = [[
       // Not sure of a way to pre-calculate a constant using the values from the ui parameters in Resolve DCTL...
       // This approach might have performance implications
       lim = make_float3(
-        bisect(_fmaxf(0.0001f, params->cyan)+1.0f, thr, method),
-        bisect(_fmaxf(0.0001f, params->magenta)+1.0f, thr, method),
-        bisect(_fmaxf(0.0001f, params->yellow)+1.0f, thr, method));
+        bisect(_fmaxf(0.0001f, params->cyan)+1.0f, thr.x, method),
+        bisect(_fmaxf(0.0001f, params->magenta)+1.0f, thr.y, method),
+        bisect(_fmaxf(0.0001f, params->yellow)+1.0f, thr.z, method));
     }
 
     // achromatic axis 
@@ -429,18 +452,18 @@ SolidKernel = [[
       // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
       sat = _fmaxf(dist.x, _fmaxf(dist.y, dist.z));
       csat = make_float3(
-        compress(sat, lim.x, thr, params->invert, method, params->power),
-        compress(sat, lim.y, thr, params->invert, method, params->power),
-        compress(sat, lim.z, thr, params->invert, method, params->power));
+        compress(sat, lim.x, thr.x, params->invert, method, params->power),
+        compress(sat, lim.y, thr.y, params->invert, method, params->power),
+        compress(sat, lim.z, thr.z, params->invert, method, params->power));
       cdist = sat == 0 ? dist : make_float3(
         dist.x * csat.x / sat,
         dist.y * csat.y / sat,
         dist.z * csat.z / sat);
     } else {
       cdist = make_float3(
-        compress(dist.x, lim.x, thr, params->invert, method, params->power),
-        compress(dist.y, lim.y, thr, params->invert, method, params->power),
-        compress(dist.z, lim.z, thr, params->invert, method, params->power));
+        compress(dist.x, lim.x, thr.x, params->invert, method, params->power),
+        compress(dist.y, lim.y, thr.y, params->invert, method, params->power),
+        compress(dist.z, lim.z, thr.z, params->invert, method, params->power));
     }
 
     // recalculate rgb from compressed distance and achromatic

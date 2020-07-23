@@ -1,38 +1,114 @@
-<ShaderNodePreset SupportsAdaptiveDegradation="False" SupportsAction="True" SupportsTransition="False" SupportsTimeline="True" TimelineUseBack="False" MatteProvider="False" CommercialUsePermitted="True" ShaderType="Matchbox" SoftwareVersion="2017.0.0" LimitInputsToTexture="True" Version="2" Description="" Name="Gamut Compress">
-   <Shader Clear="0" GridSubdivision="1" OutputBitDepth="Output" Index="1">
+<ShaderNodePreset
+  SupportsAdaptiveDegradation="False"
+  SupportsAction="True"
+  SupportsTransition="False"
+  SupportsTimeline="True"
+  TimelineUseBack="False"
+  MatteProvider="False"
+  CommercialUsePermitted="True"
+  ShaderType="Matchbox"
+  SoftwareVersion="2017.0.0"
+  LimitInputsToTexture="True"
+  Version="0.5"
+  Description="GamutCompress
+maps out of gamut colors back into gamut.
+
+Threshold
+Percentage of the gamut to affect. If threshold is 0.2, 
+the inner 80% of the gamut will be unaffected and 
+out of gamut values will be compressed into 
+the outer 20% of the gamut's color volume.
+
+Power
+Adjust the exponent of the compression function. 1 = Reinhard. 
+Higher values have C2 continuity and result in a more 
+aggressive curve, which preserves more color purity or saturation.
+Be wary of high values if accurate inversion is important to you.
+
+Shadow Rolloff
+Reduce gamut compression in dark areas below specified value.
+Helps reduce invertability issues in negative values from grain.
+
+Max Distance
+Per color component control to specify what distance will be 
+compressed to the gamut boundary. For example, 
+a value of cyan=0.2 will map colors with a distance of red=1.2 from 
+the achromatic axis to red=1.0, which is the gamut boundary.
+
+Calculate Max Distance
+A helper to calculate the max distance that might occur when 
+mapping from a particular source color gamut. For example 
+when mapping from AlexaWideGamut to ACEScg, the max distance
+of magenta will be highest and the other two components will be lower.
+Setting these distance values according to the likely distances in the 
+source gamut helps avoid unwanted shifts in color. The default is set to
+a good average among many digital cinema camera gamuts, but you may
+want to tweak these values for your needs.
+
+Direction
+Specifies whether to apply or inverse the gamut compression operation.
+
+About
+Written by Jed Smith with lots of help from the ACES Gamut Mapping Virtual Working Group.
+https://github.com/jedypod
+https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective
+https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group
+"
+  Name="Gamut Compress">
+
+  <Shader Clear="0" GridSubdivision="1" OutputBitDepth="Output" Index="1">
       <Uniform Index="0" NoInput="Error" Tooltip="" DisplayName="Front" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="frontTex" InputType="Front">
       </Uniform>
       <Uniform Index="1" NoInput="White" Tooltip="" DisplayName="Selective" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="selectiveTex" InputType="Selective">
       </Uniform>
       <Uniform Index="2" NoInput="White" Tooltip="" DisplayName="Matte" Mipmaps="False" GL_TEXTURE_WRAP_T="GL_REPEAT" GL_TEXTURE_WRAP_S="GL_REPEAT" GL_TEXTURE_MAG_FILTER="GL_LINEAR" GL_TEXTURE_MIN_FILTER="GL_LINEAR" Type="sampler2D" Name="matteTex" InputType="Matte">
       </Uniform>
-      <Uniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2" Inc="0.01" Tooltip="Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." Row="0" Col="0" Page="0" Type="float" ChannelName="threshold" DisplayName="threshold" Name="threshold">
+      <Uniform Row="0" Col="0" Page="0" Default="2" Inc="1" Tooltip="Choose the type of distance compression function you want to use" Type="int" ChannelName="method" DisplayName="method" Name="method" ValueType="Popup">
+              <PopupEntry Title="log" Value="0">
+              </PopupEntry>
+              <PopupEntry Title="reinhard" Value="1">
+              </PopupEntry>
+              <PopupEntry Title="power" Value="2">
+              </PopupEntry>
+              <PopupEntry Title="exp" Value="3">
+              </PopupEntry>
+              <PopupEntry Title="arctan" Value="4">
+              </PopupEntry>
+              <PopupEntry Title="tanh" Value="5">
+              </PopupEntry>
+            </Uniform>
+      <Uniform Inc="0.01" Tooltip="Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." 
+        Row="1" Col="0" Page="0" IconType="None" ValueType="Position" Type="vec3" ChannelName="threshold" DisplayName="threshold" Name="threshold">
+        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        </SubUniform>
+        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        </SubUniform>
+        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        </SubUniform>
       </Uniform>
-      <Uniform ResDependent="None" Max="3.0" Min="1.0" Default="1.2" Inc="0.01" Tooltip="Adjust the aggressiveness of the curve when method is set to power. 1 is equal to reinhard. higher values bias compressed values closer to the gamut boundary." Row="1" Col="0" Page="0" Type="float" ChannelName="power" DisplayName="power" Name="power">
+      <Uniform ResDependent="None" Max="3" Min="1" Default="1.2" Inc="0.01" 
+        Tooltip="Adjust the exponent of the compression function. 1 = Reinhard. Higher values have C2 continuity and result in a more aggressive curve which preserves more color purity or saturation.
+
+Be wary of high values if accurate inversion is important to you." 
+        Row="3" Col="0" Page="0" Type="float" ChannelName="power" DisplayName="power" Name="power">
       </Uniform>
-      <Uniform ResDependent="None" Max="0.1" Min="0.0" Default="0.03" Inc="0.01" Tooltip="Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain." Row="2" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
+      <Uniform ResDependent="None" Max="0.1" Min="0.0" Default="0.03" Inc="0.001" 
+        Tooltip="Shadow rolloff reduces the gamut compression effect below the specified achromatic pixel value. This reduces invertability issues with negative pixels in shadow grain."
+        Row="4" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
       </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.09" Inc="0.01" Tooltip="Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." Row="0" Col="1" Page="0" Type="float" ChannelName="cyan" DisplayName="cyan" Name="cyan">
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.09" Inc="0.01" 
+        Tooltip="Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." 
+        Row="0" Col="1" Page="0" Type="float" ChannelName="cyan" DisplayName="cyan" Name="cyan">
       </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.24" Inc="0.01" Tooltip="Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." Row="1" Col="1" Page="0" Type="float" ChannelName="magenta" DisplayName="magenta" Name="magenta">
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.24" Inc="0.01" 
+        Tooltip="Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." 
+        Row="1" Col="1" Page="0" Type="float" ChannelName="magenta" DisplayName="magenta" Name="magenta">
       </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.12" Inc="0.01" Tooltip="Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." Row="2" Col="1" Page="0" Type="float" ChannelName="yellow" DisplayName="yellow" Name="yellow">
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.12" Inc="0.01" 
+        Tooltip="Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary."
+        Row="2" Col="1" Page="0" Type="float" ChannelName="yellow" DisplayName="yellow" Name="yellow">
       </Uniform>
-      <Uniform Row="0" Col="2" Page="0" Default="2" Inc="1" Tooltip="Choose the type of distance compression function you want to use" Type="int" ChannelName="method" DisplayName="method" Name="method" ValueType="Popup">
-        <PopupEntry Title="log" Value="0">
-        </PopupEntry>
-        <PopupEntry Title="reinhard" Value="1">
-        </PopupEntry>
-        <PopupEntry Title="power" Value="2">
-        </PopupEntry>
-        <PopupEntry Title="exp" Value="3">
-        </PopupEntry>
-        <PopupEntry Title="arctan" Value="4">
-        </PopupEntry>
-        <PopupEntry Title="tanh" Value="5">
-        </PopupEntry>
-      </Uniform>
-      <Uniform Row="1" Col="2" Page="0" Default="0" Inc="1" Tooltip="" Type="int" ChannelName="working_colorspace" DisplayName="working space" Name="working_colorspace" ValueType="Popup">
+      <Uniform Row="0" Col="2" Page="0" Default="0" Inc="1" Tooltip="" Type="int" ChannelName="working_colorspace" DisplayName="working space" Name="working_colorspace" ValueType="Popup">
         <PopupEntry Title="ACEScg" Value="0">
         </PopupEntry>
         <PopupEntry Title="ACEScct" Value="1">
@@ -40,15 +116,15 @@
         <PopupEntry Title="ACEScc" Value="2">
         </PopupEntry>
       </Uniform>
-      <Uniform Row="2" Col="2" Page="0" Default="False" Tooltip="Compress secondary colors in addition to primary colors. Uses variation on the algorithm suggested by Nick Shaw https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060" Type="bool" ChannelName="hexagonal" DisplayName="hexagonal" Name="hexagonal">
+      <Uniform Row="1" Col="2" Page="0" Default="False" Tooltip="Compress secondary colors in addition to primary colors. Uses variation on the algorithm suggested by Nick Shaw https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060" Type="bool" ChannelName="hexagonal" DisplayName="hexagonal" Name="hexagonal">
       </Uniform>
-      <Uniform Row="3" Col="2" Page="0" Default="False" Tooltip="" Type="bool" ChannelName="invert" DisplayName="invert" Name="invert">
+      <Uniform Row="2" Col="2" Page="0" Default="False" Tooltip="Reverse the direction of the operation from gamut compression to gamut expansion." Type="bool" ChannelName="invert" DisplayName="invert" Name="invert">
       </Uniform>
    </Shader>
    <Page Name="Gamut Compress" Page="0">
       <Col Name="Controls" Col="0" Page="0">
       </Col>
-      <Col Name="Distance" Col="1" Page="0">
+      <Col Name="Max Distance" Col="1" Page="0">
       </Col>
       <Col Name="Settings" Col="2" Page="0">
       </Col>

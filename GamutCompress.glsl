@@ -1,7 +1,8 @@
 uniform sampler2D frontTex, matteTex, selectiveTex;
-uniform float threshold, power, cyan, magenta, yellow, shd_rolloff, adsk_result_w, adsk_result_h;
+uniform float power, cyan, magenta, yellow, shd_rolloff, adsk_result_w, adsk_result_h;
 uniform int method, working_colorspace;
 uniform bool invert, hexagonal;
+uniform vec3 threshold;
 
 const float pi = 3.14159265359;
 
@@ -209,7 +210,10 @@ void main() {
   } 
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
-  float thr = 1.0 - threshold;
+  vec3 thr = vec3(
+    1.0-max(0.00001, threshold.x),
+    1.0-max(0.00001, threshold.y),
+    1.0-max(0.00001, threshold.z));
 
   // lim is the max distance from the gamut boundary that will be compressed
   // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
@@ -224,9 +228,9 @@ void main() {
     // Not sure of a way to pre-calculate a constant using the values from the ui parameters in GLSL...
     // This approach might have performance implications
     lim = vec3(
-      bisect(max(0.0001, cyan)+1.0, thr, method),
-      bisect(max(0.0001, magenta)+1.0, thr, method),
-      bisect(max(0.0001, yellow)+1.0, thr, method));
+      bisect(max(0.0001, cyan)+1.0, thr.x, method),
+      bisect(max(0.0001, magenta)+1.0, thr.y, method),
+      bisect(max(0.0001, yellow)+1.0, thr.z, method));
   }
 
   // achromatic axis 
@@ -249,18 +253,18 @@ void main() {
     // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
     sat = max(dist.x, max(dist.y, dist.z));
     csat = vec3(
-      compress(sat, lim.x, thr, invert, method, power),
-      compress(sat, lim.y, thr, invert, method, power),
-      compress(sat, lim.z, thr, invert, method, power));
+      compress(sat, lim.x, thr.x, invert, method, power),
+      compress(sat, lim.y, thr.y, invert, method, power),
+      compress(sat, lim.z, thr.z, invert, method, power));
     cdist = sat == 0.0 ? dist : vec3(
       dist.x * csat.x / sat,
       dist.y * csat.y / sat,
       dist.z * csat.z / sat);
   } else {
     cdist = vec3(
-      compress(dist.x, lim.x, thr, invert, method, power),
-      compress(dist.y, lim.y, thr, invert, method, power),
-      compress(dist.z, lim.z, thr, invert, method, power));
+      compress(dist.x, lim.x, thr.x, invert, method, power),
+      compress(dist.y, lim.y, thr.y, invert, method, power),
+      compress(dist.z, lim.z, thr.z, invert, method, power));
   }
 
   // recalculate rgb from compressed distance and achromatic

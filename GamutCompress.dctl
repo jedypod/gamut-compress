@@ -1,12 +1,14 @@
-DEFINE_UI_PARAMS(cmethod, method, DCTLUI_COMBO_BOX, 2, {L, R, P, E, A, T}, {log, reinhard, power, exp, arctan, tanh});
-DEFINE_UI_PARAMS(threshold, threshold, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_r, threshold r, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_g, threshold g, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_b, threshold b, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
 DEFINE_UI_PARAMS(power, power, DCTLUI_SLIDER_FLOAT, 1.2f, 1.0f, 3.0f, 1.0f);
 DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1f, 0.0f);
 DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(compress_secondaries, compress secondaries, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(cmethod, method, DCTLUI_COMBO_BOX, 2, {L, R, P, E, A, T}, {log, reinhard, power, exp, arctan, tanh});
 DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescc, acescg}, {acescct, acescc, acescg});
+DEFINE_UI_PARAMS(hexagonal, hexagonal, DCTLUI_CHECK_BOX, 0);
 DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
 
 __CONSTANT__ float pi = 3.14159265359f;
@@ -221,7 +223,10 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   }
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
-  float thr = 1.0f - threshold;
+  float3 thr = make_float3(
+    1.0f-_fmaxf(0.00001, threshold_r),
+    1.0f-_fmaxf(0.00001, threshold_g),
+    1.0f-_fmaxf(0.00001, threshold_b));
   
   // lim is the max distance from the gamut boundary that will be compressed
   // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
@@ -236,9 +241,9 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     // Not sure of a way to pre-calculate a constant using the values from the ui parameters in Resolve DCTL...
     // This approach might have performance implications
     lim = make_float3(
-      bisect(_fmaxf(0.0001f, cyan)+1.0f, thr, method),
-      bisect(_fmaxf(0.0001f, magenta)+1.0f, thr, method),
-      bisect(_fmaxf(0.0001f, yellow)+1.0f, thr, method));
+      bisect(_fmaxf(0.0001f, cyan)+1.0f, thr.x, method),
+      bisect(_fmaxf(0.0001f, magenta)+1.0f, thr.y, method),
+      bisect(_fmaxf(0.0001f, yellow)+1.0f, thr.z, method));
   }
 
   // achromatic axis 
@@ -256,23 +261,23 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   // compress distance with user controlled parameterized shaper function
   float sat;
   float3 csat, cdist;
-  if (compress_secondaries) {
+  if (hexagonal) {
     // Based on Nick Shaw's variation on the gamut mapping algorithm 
     // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
     sat = _fmaxf(dist.x, _fmaxf(dist.y, dist.z));
     csat = make_float3(
-      compress(sat, lim.x, thr, invert, method, power),
-      compress(sat, lim.y, thr, invert, method, power),
-      compress(sat, lim.z, thr, invert, method, power));
+      compress(sat, lim.x, thr.x, invert, method, power),
+      compress(sat, lim.y, thr.y, invert, method, power),
+      compress(sat, lim.z, thr.z, invert, method, power));
     cdist = sat == 0.0f ? dist : make_float3(
       dist.x * csat.x / sat,
       dist.y * csat.y / sat,
       dist.z * csat.z / sat);
   } else {
     cdist = make_float3(
-      compress(dist.x, lim.x, thr, invert, method, power),
-      compress(dist.y, lim.y, thr, invert, method, power),
-      compress(dist.z, lim.z, thr, invert, method, power));
+      compress(dist.x, lim.x, thr.x, invert, method, power),
+      compress(dist.y, lim.y, thr.y, invert, method, power),
+      compress(dist.z, lim.z, thr.z, invert, method, power));
   }
 
   // recalculate rgb from compressed distance and achromatic
@@ -281,10 +286,6 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     ach-cdist.x*ach_shd,
     ach-cdist.y*ach_shd,
     ach-cdist.z*ach_shd);
-
-    crgb.x = isnan(crgb.x) ? 0.0f : crgb.x;
-    crgb.y = isnan(crgb.y) ? 0.0f : crgb.y;
-    crgb.z = isnan(crgb.z) ? 0.0f : crgb.z;
 
   if (working_colorspace == acescct) {
     crgb.x = lin_to_acescct(crgb.x);
