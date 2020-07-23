@@ -1,10 +1,13 @@
-DEFINE_UI_PARAMS(threshold, threshold, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.4f, 0.0f);
-DEFINE_UI_PARAMS(power, power, DCTLUI_SLIDER_FLOAT, 1.2f, 1.0f, 5.0f, 1.0f);
+DEFINE_UI_PARAMS(threshold_r, threshold r, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_g, threshold g, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_b, threshold b, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(power, power, DCTLUI_SLIDER_FLOAT, 1.2f, 1.0f, 3.0f, 1.0f);
 DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1f, 0.0f);
 DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(linearize_acescct, linearize_acescct, DCTLUI_CHECK_BOX, 1);
+DEFINE_UI_PARAMS(hexagonal, hexagonal, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescc, acescg}, {acescct, acescc, acescg});
 DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
 
 
@@ -26,6 +29,27 @@ __DEVICE__ float acescct_to_lin(float in) {
   }
 }
 
+// Convert acescg to acescc
+__DEVICE__ float lin_to_acescc(float in) {
+  if (in <= 0.0f) {
+    return -0.3584474886f;
+  } else if (in < _powf(2.0f, -15.0f)) {
+    return (_log2f(_powf(2.0f, -16.0f) + in * 0.5f) + 9.72f) / 17.52f;
+  } else {
+    return (_log2f(in) + 9.72f) / 17.52f;
+  }
+}
+
+// Convert acescc to acescg
+__DEVICE__ float acescc_to_lin(float in) {
+  if (in < -0.3013698630f) {
+    return (_powf( 2.0f, in * 17.52f - 9.72f) - _powf( 2.0f, -16.0f)) * 2.0f;
+  } else if (in < (_log2f(65504.0f)+9.72f)/17.52f) {
+    return _powf(2.0f, in * 17.52f - 9.72f);
+  } else {
+    return 65504.0f;
+  }
+}
 
 // calculate compressed distance
 __DEVICE__ float compress(float x, float l, float t, float p, bool invert) {
@@ -53,21 +77,25 @@ __DEVICE__ float compress(float x, float l, float t, float p, bool invert) {
 
 __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B) 
 { 
-  // ^-- this is necessary for the DCTL to work!
 
   // source pixels
   float3 rgb = make_float3(p_R, p_G, p_B);
   
-  // linearize
-  if (linearize_acescct == 1) {
+  // working colorspace to linear
+  if (working_colorspace == acescct) {
     rgb.x = acescct_to_lin(rgb.x);
     rgb.y = acescct_to_lin(rgb.y);
     rgb.z = acescct_to_lin(rgb.z);
+  } else if (working_colorspace == acescc) {
+    rgb.x = acescc_to_lin(rgb.x);
+    rgb.y = acescc_to_lin(rgb.y);
+    rgb.z = acescc_to_lin(rgb.z);
   }
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
-  float thr = 1.0f - threshold;
-
+  float3 thr;
+  thr = make_float3(_fmaxf(0.00001, 1.0f-threshold_r), _fmaxf(0.00001, 1.0f-threshold_g), _fmaxf(0.00001, 1.0f-threshold_b));
+  
   // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
   // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).  
   float3 lim;
@@ -85,13 +113,28 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
   dist.y = ach_shd == 0.0f ? 0.0f : (ach-rgb.y)/ach_shd;
   dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
-  // return dist;
 
   // compress distance with user controlled parameterized shaper function
-  float3 cdist = make_float3(
-    compress(dist.x, lim.x, thr, power, invert),
-    compress(dist.y, lim.y, thr, power, invert),
-    compress(dist.z, lim.z, thr, power, invert));
+  float sat;
+  float3 csat, cdist;
+  if (hexagonal) {
+    // Based on Nick Shaw's variation on the gamut mapping algorithm 
+    // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
+    sat = _fmaxf(dist.x, _fmaxf(dist.y, dist.z));
+    csat = make_float3(
+      compress(sat, lim.x, thr.x, power, invert),
+      compress(sat, lim.y, thr.y, power, invert),
+      compress(sat, lim.z, thr.z, power, invert));
+    cdist = sat == 0.0f ? dist : make_float3(
+      dist.x * csat.x / sat,
+      dist.y * csat.y / sat,
+      dist.z * csat.z / sat);
+  } else {
+    cdist = make_float3(
+      compress(dist.x, lim.x, thr.x, power, invert),
+      compress(dist.y, lim.y, thr.y, power, invert),
+      compress(dist.z, lim.z, thr.z, power, invert));
+  }
 
   // recalculate rgb from compressed distance and achromatic
   // effectively this scales each color component relative to achromatic axis by the compressed distance
@@ -105,10 +148,15 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   crgb.y = isnan(crgb.y) ? 0.0f : crgb.y;
   crgb.z = isnan(crgb.z) ? 0.0f : crgb.z;
 
-  if (linearize_acescct == 1) {
+  // linear to working colorspace
+  if (working_colorspace == acescct) {
     crgb.x = lin_to_acescct(crgb.x);
     crgb.y = lin_to_acescct(crgb.y);
     crgb.z = lin_to_acescct(crgb.z);
+  } else if (working_colorspace == acescc) {
+    crgb.x = lin_to_acescc(crgb.x);
+    crgb.y = lin_to_acescc(crgb.y);
+    crgb.z = lin_to_acescc(crgb.z);
   }
 
   // write output

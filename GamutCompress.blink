@@ -9,6 +9,7 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     float cyan;
     float magenta;
     float yellow;
+    bool hexagonal;
     bool invert;
 
   local:
@@ -70,11 +71,25 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     float3 dist = ach_shd == 0 ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;
 
     // compress distance with parameterized compression function
-    float3 cdist = float3(
-      compress(dist.x, lim.x, thr.x),
-      compress(dist.y, lim.y, thr.y),
-      compress(dist.z, lim.z, thr.z));
-
+    float sat;
+    float3 csat, cdist;
+    if (hexagonal) {
+      sat = max(dist.x, max(dist.y, dist.z));
+      csat = float3(
+        compress(sat, lim.x, thr.x),
+        compress(sat, lim.y, thr.y),
+        compress(sat, lim.z, thr.z));
+      cdist = sat == 0.0f ? dist : float3(
+        dist.x * csat.x / sat,
+        dist.y * csat.y / sat,
+        dist.z * csat.z / sat);
+    } else {
+      cdist = float3(
+        compress(dist.x, lim.x, thr.x),
+        compress(dist.y, lim.y, thr.y),
+        compress(dist.z, lim.z, thr.z));
+    }
+    
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance
     float3 crgb = ach-cdist*ach_shd;
