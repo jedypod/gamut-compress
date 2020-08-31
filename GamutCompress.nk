@@ -3,16 +3,15 @@ push $cut_paste_input
 Group {
  name GamutCompress
  addUserKnob {20 GamutCompress}
- addUserKnob {6 hexagonal t "Compress secondary colors in addition to primary colors. Uses a variation on the algorithm suggested by Nick Shaw https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060" +STARTLINE}
  addUserKnob {41 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." T compress.threshold}
  addUserKnob {41 power t "Adjust the exponent of the compression function. 1 = Reinhard. Higher values have C2 continuity and result in a more \"aggressive\" curve which preserves more color purity or saturation.\n\nBe wary of high values if accurate inv\nersion is important to you." T compress.power}
- addUserKnob {7 shd_rolloff l "shd rolloff" t "Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain." R 0 0.1}
- shd_rolloff 0.03
+ addUserKnob {7 shd_rolloff l "shd rolloff" t "Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain." R 0 0.03}
+ shd_rolloff 0
  addUserKnob {26 distance_limit_label l " " t "Specifies the maximum distance beyond the gamut boundary to map to the gamut boundary for each color component." T "<b>max distance limit"}
  addUserKnob {41 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." T compress.cyan}
  addUserKnob {41 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." T compress.magenta}
  addUserKnob {41 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." T compress.yellow}
- addUserKnob {22 reset t "Reset knobs to default values. Distance limits are calculated based on an the average of a selection of digital cinema cameras." T "n = nuke.thisNode()\nnuke.root().begin()\ndefaults = \{\n    'threshold': 0.2,\n    'power': 1.2,\n    'shd_rolloff': 0.03,\n    'cyan': 0.09,\n    'magenta':0.24,\n    'yellow': 0.12,\n\}\nfor k, v in defaults.items():\n    n\[k].setValue(v)" +STARTLINE}
+ addUserKnob {22 reset t "Reset knobs to default values. Distance limits are calculated based on an the average of a selection of digital cinema cameras." T "n = nuke.thisNode()\nnuke.root().begin()\ndefaults = \{\n    'threshold': 0.2,\n    'power': 1.2,\n    'shd_rolloff': 0.0,\n    'cyan': 0.09,\n    'magenta':0.24,\n    'yellow': 0.12,\n\}\nfor k, v in defaults.items():\n    n\[k].setValue(v)" +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {4 direction M {forward inverse}}
  addUserKnob {20 info_tab l Info}
@@ -23,39 +22,39 @@ Group {
   inputs 0
   name Input
   xpos -40
-  ypos -274
+  ypos -298
  }
  Dot {
   name Dot4
   xpos -6
-  ypos -174
+  ypos -198
  }
-set N1f2064d0 [stack 0]
+set N358f7310 [stack 0]
  Dot {
   name Dot2
   xpos -226
-  ypos -174
+  ypos -198
  }
  Expression {
   channel0 {rgba.red rgba.green rgba.blue none}
   expr0 max(r,g,b)
   name achromatic
   xpos -260
-  ypos -130
+  ypos -154
  }
-set N1ee058b0 [stack 0]
+set N420bd290 [stack 0]
  Dot {
   name Dot1
   xpos -226
-  ypos -78
+  ypos -102
  }
-set N1e501c80 [stack 0]
+set N354f7b20 [stack 0]
  Dot {
   name Dot3
   xpos -226
-  ypos 210
+  ypos 66
  }
-push $N1e501c80
+push $N354f7b20
  Expression {
   temp_name0 c_r
   temp_expr0 1-r
@@ -68,20 +67,29 @@ push $N1e501c80
   expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
   name toe
   xpos -150
-  ypos -82
-  disable {{parent.shd_rolloff==0}}
+  ypos -106
+  disable {{parent.shd_rolloff<0.004}}
   addUserKnob {20 Params_tab l Params}
   addUserKnob {7 thr t "complement of threshold"}
   thr {{parent.shd_rolloff}}
  }
-set N1f040420 [stack 0]
+ Expression {
+  expr0 abs(r)
+  expr1 abs(g)
+  expr2 abs(b)
+  name abs
+  xpos -150
+  ypos -82
+ }
+set N3539e690 [stack 0]
  Dot {
   name Dot7
   xpos -116
-  ypos 162
+  ypos 18
  }
-push $N1ee058b0
-push $N1f2064d0
+push $N3539e690
+push $N420bd290
+push $N358f7310
  Merge2 {
   inputs 2
   operation minus
@@ -91,66 +99,22 @@ push $N1f2064d0
   output rgb
   name Merge1
   xpos -40
-  ypos -130
+  ypos -154
  }
-push $N1f040420
- Merge2 {
+ MergeExpression {
   inputs 2
-  operation divide
-  bbox B
-  Achannels rgb
-  Bchannels rgb
-  output rgb
-  name Merge2
+  expr0 Ar==0?0:Br/Ar
+  expr1 Ag==0?0:Bg/Ag
+  expr2 Ab==0?0:Bb/Ab
+  channel3 none
+  name MergeDivide
   xpos -40
   ypos -82
- }
- Dot {
-  name Dot5
-  note_font "Helvetica Bold"
-  note_font_size 24
-  note_font_color 0xff
-  xpos -6
-  ypos -30
- }
-set N1ee5e620 [stack 0]
- Dot {
-  name Dot8
-  note_font "Helvetica Bold"
-  note_font_size 24
-  note_font_color 0xff
-  xpos 104
-  ypos -30
- }
-set N217abab0 [stack 0]
- Dot {
-  name Dot6
-  note_font "Helvetica Bold"
-  note_font_size 24
-  note_font_color 0xff
-  xpos 214
-  ypos -30
- }
- Expression {
-  channel0 {rgba.red rgba.green rgba.blue none}
-  expr0 max(r,g,b)
-  name sat
-  xpos 180
-  ypos 14
- }
-set N1f513950 [stack 0]
-push $N1ee5e620
- Switch {
-  inputs 2
-  which {{parent.hexagonal}}
-  name Switch_hexagonal
-  xpos -40
-  ypos 15
  }
  Group {
   name compress
   xpos -40
-  ypos 62
+  ypos -34
   addUserKnob {20 compress}
   addUserKnob {18 threshold}
   threshold 0.2
@@ -173,7 +137,7 @@ push $N1ee5e620
    xpos -260
    ypos -250
   }
-set N1e6ddce0 [stack 0]
+set N326b77d0 [stack 0]
   Expression {
    temp_name0 s_x
    temp_expr0 (lim_x-thr_x)/pow(pow((1-thr_x)/(lim_x-thr_x),-p)-1,1/p)
@@ -203,7 +167,7 @@ set N1e6ddce0 [stack 0]
    addUserKnob {7 p R 1 5}
    p {{parent.power}}
   }
-push $N1e6ddce0
+push $N326b77d0
   Expression {
    temp_name0 s_x
    temp_expr0 (lim_x-thr_x)/pow(pow((1-thr_x)/(lim_x-thr_x),-p)-1,1/p)
@@ -246,34 +210,6 @@ push $N1e6ddce0
    ypos -106
   }
  end_group
-set N1eddd420 [stack 0]
-push $N217abab0
- Merge2 {
-  inputs 2
-  operation multiply
-  bbox B
-  output rgb
-  name Merge4
-  xpos 70
-  ypos 63
- }
-push $N1f513950
- Merge2 {
-  inputs 2
-  operation divide
-  bbox B
-  name Merge6
-  xpos 180
-  ypos 111
- }
-push $N1eddd420
- Switch {
-  inputs 2
-  which {{parent.hexagonal}}
-  name Switch_hexagonal1
-  xpos -40
-  ypos 111
- }
  Merge2 {
   inputs 2
   operation multiply
@@ -283,7 +219,7 @@ push $N1eddd420
   output rgb
   name Merge3
   xpos -40
-  ypos 158
+  ypos 14
  }
  Merge2 {
   inputs 2
@@ -294,11 +230,11 @@ push $N1eddd420
   output rgb
   name Merge5
   xpos -40
-  ypos 206
+  ypos 62
  }
  Output {
   name Output
   xpos -40
-  ypos 302
+  ypos 158
  }
 end_group

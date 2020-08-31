@@ -9,7 +9,6 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     float cyan;
     float magenta;
     float yellow;
-    bool hexagonal;
     bool invert;
 
   local:
@@ -35,6 +34,7 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
   float compress(float x, float l, float t) {
     float cdist;
     // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
+    // suggested by James Eggleton https://community.acescentral.com/t/gamut-mapping-compression-curves/3073/10
     float s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
     if (l < 1.0001) {
       return x; // disable compression, avoid nan
@@ -62,33 +62,28 @@ kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
     // achromatic axis 
     float ach = max(rgb.x, max(rgb.y, rgb.z));
 
-    // achromatic with shadow rolloff below shd_rolloff threshold
-    float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):
-      (1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
-
-    // distance from the achromatic axis for each color component aka inverse rgb ratios
-    // distance is normalized by achromatic, so that 1.0f is at gamut boundary. avoid 0 div
-    float3 dist = ach_shd == 0 ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;
+    // achromatic shadow rolloff
+    float ach_shd;
+    if (shd_rolloff < 0.004f) {
+      // disable shadow rolloff functionality. 
+      // values below 0.004 cause strange behavior, actually increasing distance in some cases.
+      // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
+      ach_shd = fabs(ach);
+    } else {
+      // lift ach below threshold using a tanh compression function. 
+      // this reduces large distance values in shadow grain, which can cause differences when inverting.
+      ach_shd = 1.0f-((1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
+    } 
+    
+    // distance from the achromatic axis for each color component aka inverse rgb ratios.
+    // we normalize the distance by dividing by achromatic, so that 1.0 is at gamut boundary, avoid 0 division errors.
+    float3 dist = ach_shd == 0.0f ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;
 
     // compress distance with parameterized compression function
-    float sat;
-    float3 csat, cdist;
-    if (hexagonal) {
-      sat = max(dist.x, max(dist.y, dist.z));
-      csat = float3(
-        compress(sat, lim.x, thr.x),
-        compress(sat, lim.y, thr.y),
-        compress(sat, lim.z, thr.z));
-      cdist = sat == 0.0f ? dist : float3(
-        dist.x * csat.x / sat,
-        dist.y * csat.y / sat,
-        dist.z * csat.z / sat);
-    } else {
-      cdist = float3(
-        compress(dist.x, lim.x, thr.x),
-        compress(dist.y, lim.y, thr.y),
-        compress(dist.z, lim.z, thr.z));
-    }
+    float3 cdist = float3(
+      compress(dist.x, lim.x, thr.x),
+      compress(dist.y, lim.y, thr.y),
+      compress(dist.z, lim.z, thr.z));
     
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance

@@ -78,8 +78,8 @@ https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-map
 Be wary of high values if accurate inversion is important to you." 
         Row="2" Col="0" Page="0" Type="float" ChannelName="power" DisplayName="power" Name="power">
       </Uniform>
-      <Uniform ResDependent="None" Max="0.1" Min="0.0" Default="0.03" Inc="0.001" 
-        Tooltip="Shadow rolloff reduces the gamut compression effect below the specified achromatic pixel value. This reduces invertability issues with negative pixels in shadow grain."
+      <Uniform ResDependent="None" Max="0.03" Min="0.0" Default="0.0" Inc="0.001" 
+        Tooltip="Shadow rolloff reduces the gamut compression effect below the specified achromatic pixel value. This reduces invertability issues with negative pixels in shadow grain. Make sure there is only shadow grain below the threshold you specify."
         Row="3" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
       </Uniform>
       <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.09" Inc="0.01" 
@@ -102,9 +102,7 @@ Be wary of high values if accurate inversion is important to you."
         <PopupEntry Title="ACEScc" Value="2">
         </PopupEntry>
       </Uniform>
-      <Uniform Row="1" Col="2" Page="0" Default="False" Tooltip="Compress secondary colors in addition to primary colors. Uses variation on the algorithm suggested by Nick Shaw https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060" Type="bool" ChannelName="hexagonal" DisplayName="hexagonal" Name="hexagonal">
-      </Uniform>
-      <Uniform Row="2" Col="2" Page="0" Default="False" Tooltip="Reverse the direction of the operation from gamut compression to gamut expansion." Type="bool" ChannelName="invert" DisplayName="invert" Name="invert">
+      <Uniform Row="1" Col="2" Page="0" Default="False" Tooltip="Reverse the direction of the operation from gamut compression to gamut expansion." Type="bool" ChannelName="invert" DisplayName="invert" Name="invert">
       </Uniform>
    </Shader>
    <Page Name="Gamut Compress" Page="0">

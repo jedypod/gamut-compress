@@ -27,6 +27,7 @@ Be wary of high values if accurate inversion is important to you.
 Shadow Rolloff
 Reduce gamut compression in dark areas below specified value.
 Helps reduce invertability issues in negative values from grain.
+Make sure there is only shadow grain below the threshold you specify.
 
 Max Distance
 Per color component control to specify what distance will be compressed to the gamut boundary. 
@@ -75,15 +76,7 @@ FuRegisterClass("GamutCompress", CT_Tool, {
 
 
 function Create()
-  InHexagonal = self:AddInput("hexagonal", "hexagonal", {
-    LINKID_DataType = "Number",
-    INPID_InputControl = "CheckboxControl",
-    INP_MinAllowed = 0.0,
-    INP_MaxAllowed = 1.0,
-    INP_Default = 0.0,
-  })
-    
-  InThresholdR = self:AddInput("threshold_r", "threshold_r", {
+  InThresholdR = self:AddInput("threshold_c", "threshold_c", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
     INP_Default = 0.2,
@@ -91,7 +84,7 @@ function Create()
     INP_MaxScale = 0.6,
   })
 
-  InThresholdG = self:AddInput("threshold_g", "threshold_g", {
+  InThresholdG = self:AddInput("threshold_m", "threshold_m", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
     INP_Default = 0.2,
@@ -99,7 +92,7 @@ function Create()
     INP_MaxScale = 0.6,
   })
 
-  InThresholdB = self:AddInput("threshold_b", "threshold_b", {
+  InThresholdB = self:AddInput("threshold_y", "threshold_y", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
     INP_Default = 0.2,
@@ -118,9 +111,9 @@ function Create()
   InShdRolloff = self:AddInput("shd rolloff", "shd rolloff", {
       LINKID_DataType = "Number",
       INPID_InputControl = "SliderControl",
-      INP_Default = 0.03,
+      INP_Default = 0.0,
       INP_MinAllowed = 0.0,
-      INP_MaxScale = 0.1,
+      INP_MaxScale = 0.03,
   })
   
   self:BeginControlNest("max distance limits", "max distance limits", true, {})
@@ -179,10 +172,9 @@ function Process(req)
     local node = DVIPComputeNode(req, "SolidKernel", SolidKernel, "SolidParams", SolidParams)
     local params = node:GetParamBlock(SolidParams)
 
-    params.hexagonal = InHexagonal:GetValue(req).Value
-    params.threshold_r = InThresholdR:GetValue(req).Value
-    params.threshold_g = InThresholdG:GetValue(req).Value
-    params.threshold_b = InThresholdB:GetValue(req).Value
+    params.threshold_c = InThresholdR:GetValue(req).Value
+    params.threshold_m = InThresholdG:GetValue(req).Value
+    params.threshold_y = InThresholdB:GetValue(req).Value
     params.power = InPower:GetValue(req).Value
     params.shd_rolloff = InShdRolloff:GetValue(req).Value
     params.cyan = InCyan:GetValue(req).Value
@@ -209,10 +201,9 @@ end
 
 
 SolidParams = [[
-  int hexagonal;
-  float threshold_r;
-  float threshold_g;
-  float threshold_b;
+  float threshold_c;
+  float threshold_m;
+  float threshold_y;
   float power;
   float shd_rolloff;
   float cyan;
@@ -255,9 +246,9 @@ SolidKernel = [[
 
     // thr is the percentage of the core gamut to protect: the complement of threshold.
     float3 thr = make_float3(
-      1.0f-_fmaxf(0.0001f, params->threshold_r),
-      1.0f-_fmaxf(0.0001f, params->threshold_g),
-      1.0f-_fmaxf(0.0001f, params->threshold_b));
+      1.0f-_fmaxf(0.0001f, params->threshold_c),
+      1.0f-_fmaxf(0.0001f, params->threshold_m),
+      1.0f-_fmaxf(0.0001f, params->threshold_y));
     
     // lim is the max distance from the gamut boundary that will be compressed
     // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
@@ -268,8 +259,18 @@ SolidKernel = [[
     // achromatic axis 
     float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
 
-    // achromatic with shadow rolloff below shd_rolloff threshold
-    float ach_shd = 1.0f-((1.0f-ach)<(1.0f-params->shd_rolloff)?(1.0f-ach):(1.0f-params->shd_rolloff)+params->shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-params->shd_rolloff))/params->shd_rolloff)));
+    // achromatic shadow rolloff
+    float ach_shd;
+    if (params->shd_rolloff < 0.004f) {
+      // disable shadow rolloff functionality. 
+      // values below 0.004 cause strange behavior, actually increasing distance in some cases.
+      // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
+      ach_shd = _fabs(ach);
+    } else {
+      // lift ach below threshold using a tanh compression function. 
+      // this reduces large distance values in shadow grain, which can cause differences when inverting.
+      ach_shd = 1.0f-((1.0f-ach)<(1.0f-params->shd_rolloff)?(1.0f-ach):(1.0f-params->shd_rolloff)+params->shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-params->shd_rolloff))/params->shd_rolloff)));
+    } 
 
     // distance from the achromatic axis for each color component aka inverse rgb ratios
     float3 dist;
@@ -278,26 +279,10 @@ SolidKernel = [[
     dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
 
     // compress distance with user controlled parameterized shaper function
-    float sat;
-    float3 csat, cdist;
-    if (params->hexagonal) {
-      // Based on Nick Shaw's variation on the gamut mapping algorithm 
-      // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
-      sat = _fmaxf(dist.x, _fmaxf(dist.y, dist.z));
-      csat = make_float3(
-        compress(sat, lim.x, thr.x, params->power, params->invert),
-        compress(sat, lim.y, thr.y, params->power, params->invert),
-        compress(sat, lim.z, thr.z, params->power, params->invert));
-      cdist = sat == 0.0f ? dist : make_float3(
-        dist.x * csat.x / sat,
-        dist.y * csat.y / sat,
-        dist.z * csat.z / sat);
-    } else {
-      cdist = make_float3(
-        compress(dist.x, lim.x, thr.x, params->power, params->invert),
-        compress(dist.y, lim.y, thr.y, params->power, params->invert),
-        compress(dist.z, lim.z, thr.z, params->power, params->invert));
-    }
+    float3 cdist = make_float3(
+      compress(dist.x, lim.x, thr.x, params->power, params->invert),
+      compress(dist.y, lim.y, thr.y, params->power, params->invert),
+      compress(dist.z, lim.z, thr.z, params->power, params->invert));
 
     // recalculate rgb from compressed distance and achromatic
     // effectively this scales each color component relative to achromatic axis by the compressed distance

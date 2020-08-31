@@ -1,7 +1,7 @@
 uniform sampler2D frontTex, matteTex, selectiveTex;
 uniform float power, shd_rolloff, cyan, magenta, yellow, adsk_result_w, adsk_result_h;
 uniform int working_colorspace;
-uniform bool invert, hexagonal;
+uniform bool invert;
 uniform vec3 threshold;
 
 // calc hyperbolic tangent
@@ -10,7 +10,7 @@ float tanh( float val) {
   return (f-1.0)/(f+1.0);
 }
 
-// Convert ACEScg to ACEScct
+// convert acescg to acescct
 float lin_to_acescct(float val) {
   if (val <= 0.0078125) {
     return 10.5402377416545 * val + 0.0729055341958355;
@@ -19,7 +19,7 @@ float lin_to_acescct(float val) {
   }
 }
 
-// Convert ACEScct to ACEScg
+// convert acescct to acescg
 float acescct_to_lin(float val) {
   if (val > 0.155251141552511) {
     return pow( 2.0, val*17.52 - 9.72);
@@ -28,7 +28,7 @@ float acescct_to_lin(float val) {
   }
 }
 
-// Convert acescg to acescc
+// convert acescg to acescc
 float lin_to_acescc(float val) {
   if (val <= 0.0) {
     return -0.3584474886; // =(log2( pow(2.,-16.))+9.72)/17.52
@@ -39,7 +39,7 @@ float lin_to_acescc(float val) {
   }
 }
 
-// Convert acescc to acescg
+// convert acescc to acescg
 float acescc_to_lin(float val) {
   if (val < -0.3013698630) { // (9.72-15)/17.52
     return (pow(2.0, val*17.52-9.72) - pow(2.0, -16.0))*2.0;
@@ -106,8 +106,18 @@ void main() {
   // achromatic axis 
   float ach = max(rgb.x, max(rgb.y, rgb.z));
 
-  // achromatic with shadow rolloff below shd_rolloff threshold
-  float ach_shd = 1.0-((1.0-ach)<(1.0-shd_rolloff)?(1.0-ach):(1.0-shd_rolloff)+shd_rolloff*tanh((((1.0-ach)-(1.0-shd_rolloff))/shd_rolloff)));
+  // achromatic shadow rolloff
+  float ach_shd;
+  if (shd_rolloff < 0.004) {
+    // disable shadow rolloff functionality. 
+    // values below 0.004 cause strange behavior, actually increasing distance in some cases.
+    // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
+    ach_shd = abs(ach);
+  } else {
+    // lift ach below threshold using a tanh compression function. 
+    // this reduces large distance values in shadow grain, which can cause differences when inverting.
+    ach_shd = 1.0-((1.0-ach)<(1.0-shd_rolloff)?(1.0-ach):(1.0-shd_rolloff)+shd_rolloff*tanh((((1.0-ach)-(1.0-shd_rolloff))/shd_rolloff)));
+  } 
 
   // distance from the achromatic axis for each color component aka inverse rgb ratios
   // distance is normalized by achromatic, so that 1.0 is at gamut boundary. avoid 0 div
@@ -117,26 +127,10 @@ void main() {
   dist.z = ach_shd == 0.0 ? 0.0 : (ach-rgb.z)/ach_shd;
 
   // compress distance with user controlled parameterized shaper function
-  float sat;
-  vec3 csat, cdist;
-  if (hexagonal) {
-    // Based on Nick Shaw's variation on the gamut mapping algorithm 
-    // https://community.acescentral.com/t/a-variation-on-jeds-rgb-gamut-mapper/3060
-    sat = max(dist.x, max(dist.y, dist.z));
-    csat = vec3(
-      compress(sat, lim.x, thr.x, power, invert),
-      compress(sat, lim.y, thr.y, power, invert),
-      compress(sat, lim.z, thr.z, power, invert));
-    cdist = sat == 0.0 ? dist : vec3(
-      dist.x * csat.x / sat,
-      dist.y * csat.y / sat,
-      dist.z * csat.z / sat);
-  } else {
-    cdist = vec3(
-      compress(dist.x, lim.x, thr.x, power, invert),
-      compress(dist.y, lim.y, thr.y, power, invert),
-      compress(dist.z, lim.z, thr.z, power, invert));
-  }
+  vec3 cdist = vec3(
+    compress(dist.x, lim.x, thr.x, power, invert),
+    compress(dist.y, lim.y, thr.y, power, invert),
+    compress(dist.z, lim.z, thr.z, power, invert));
 
   // recalculate rgb from compressed distance and achromatic
   // effectively this scales each color component relative to achromatic axis by the compressed distance
