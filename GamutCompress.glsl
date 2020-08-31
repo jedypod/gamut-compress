@@ -236,8 +236,18 @@ void main() {
   // achromatic axis 
   float ach = max(rgb.x, max(rgb.y, rgb.z));
 
-  // achromatic with shadow rolloff below shd_rolloff threshold
-  float ach_shd = 1.0-((1.0-ach)<(1.0-shd_rolloff)?(1.0-ach):(1.0-shd_rolloff)+shd_rolloff*tanh((((1.0-ach)-(1.0-shd_rolloff))/shd_rolloff)));
+  // achromatic shadow rolloff
+  float ach_shd;
+  if (shd_rolloff < 0.004) {
+    // disable shadow rolloff functionality. 
+    // values below 0.004 cause strange behavior, actually increasing distance in some cases.
+    // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
+    ach_shd = abs(ach);
+  } else {
+    // lift ach below threshold using a tanh compression function. 
+    // this reduces large distance values in shadow grain, which can cause differences when inverting.
+    ach_shd = 1.0-((1.0-ach)<(1.0-shd_rolloff)?(1.0-ach):(1.0-shd_rolloff)+shd_rolloff*tanh((((1.0-ach)-(1.0-shd_rolloff))/shd_rolloff)));
+  }
 
   // distance from the achromatic axis for each color component aka inverse rgb ratios
   vec3 dist;

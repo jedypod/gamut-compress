@@ -92,7 +92,7 @@ https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-map
 Be wary of high values if accurate inversion is important to you." 
         Row="3" Col="0" Page="0" Type="float" ChannelName="power" DisplayName="power" Name="power">
       </Uniform>
-      <Uniform ResDependent="None" Max="0.1" Min="0.0" Default="0.03" Inc="0.001" 
+      <Uniform ResDependent="None" Max="0.03" Min="0.0" Default="0.0" Inc="0.001" 
         Tooltip="Shadow rolloff reduces the gamut compression effect below the specified achromatic pixel value. This reduces invertability issues with negative pixels in shadow grain."
         Row="4" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
       </Uniform>

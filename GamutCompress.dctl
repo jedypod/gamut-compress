@@ -1,8 +1,8 @@
-DEFINE_UI_PARAMS(threshold_r, threshold r, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
-DEFINE_UI_PARAMS(threshold_g, threshold g, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
-DEFINE_UI_PARAMS(threshold_b, threshold b, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_c, threshold c, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_m, threshold m, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
+DEFINE_UI_PARAMS(threshold_y, threshold y, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
 DEFINE_UI_PARAMS(power, power, DCTLUI_SLIDER_FLOAT, 1.2f, 1.0f, 3.0f, 1.0f);
-DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.03f, 0.0f, 0.1f, 0.0f);
+DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.0f, 0.0f, 0.03f, 0.0f);
 DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
 DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
@@ -224,9 +224,9 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
 
   // thr is the percentage of the core gamut to protect: the complement of threshold.
   float3 thr = make_float3(
-    1.0f-_fmaxf(0.00001, threshold_r),
-    1.0f-_fmaxf(0.00001, threshold_g),
-    1.0f-_fmaxf(0.00001, threshold_b));
+    1.0f-_fmaxf(0.00001, threshold_c),
+    1.0f-_fmaxf(0.00001, threshold_m),
+    1.0f-_fmaxf(0.00001, threshold_y));
   
   // lim is the max distance from the gamut boundary that will be compressed
   // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
@@ -249,9 +249,19 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   // achromatic axis 
   float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
 
-  // achromatic with shadow rolloff below shd_rolloff threshold
-  float ach_shd = 1.0f-( (1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
-
+  // achromatic shadow rolloff
+  float ach_shd;
+  if (shd_rolloff < 0.004f) {
+    // disable shadow rolloff functionality. 
+    // values below 0.004 cause strange behavior, actually increasing distance in some cases.
+    // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
+    ach_shd = _fabs(ach);
+  } else {
+    // lift ach below threshold using a tanh compression function. 
+    // this reduces large distance values in shadow grain, which can cause differences when inverting.
+    ach_shd = 1.0f-((1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
+  } 
+  
   // distance from the achromatic axis for each color component aka inverse rgb ratios
   float3 dist;
   dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
