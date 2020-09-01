@@ -4,7 +4,7 @@ Group {
  name CalculateDistance
  addUserKnob {20 GamutCalculateDistance_tab l GamutCalculateDistance}
  addUserKnob {7 shd_rolloff l "shd rolloff" t "smoothly reduce distance calculations below the specified achromatic (luminance) threshold." R 0 0.1}
- shd_rolloff 0.03
+ shd_rolloff 0.008
  addUserKnob {18 distance t "maximum distance found" R 1 2}
  distance {1 1 1}
  addUserKnob {6 distance_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
@@ -25,13 +25,13 @@ Group {
   xpos -6
   ypos 66
  }
-set N288414a0 [stack 0]
+set N39bc7100 [stack 0]
  Output {
   name Output
   xpos -40
   ypos 254
  }
-push $N288414a0
+push $N39bc7100
  Group {
   inputs 0
   name RGB
@@ -110,7 +110,7 @@ push $N288414a0
    xpos -6
    ypos -78
   }
-set N290b2840 [stack 0]
+set N2a9bd220 [stack 0]
   ColorMatrix {
    matrix {
        {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
@@ -169,7 +169,7 @@ set N290b2840 [stack 0]
    addUserKnob {12 wxy}
    wxy {{parent.mtx.wxy(which)} {parent.mtx.wxy(which)}}
   }
-push $N290b2840
+push $N2a9bd220
   ColorMatrix {
    matrix {
        {{parent.mtx.matrix(which)} {parent.mtx.matrix(which)} {parent.mtx.matrix(which)}}
@@ -238,7 +238,7 @@ push $N290b2840
    xpos -40
    ypos 374
   }
-push $N290b2840
+push $N2a9bd220
   ColorMatrix {
    matrix {
        {{curve 0.9525524378 0.6624541879 0.7053968906 0.4123907983 0.6369580626 0.5049495697 0.4865709841 0.6380076408 0.7352752686 0.5022571683 0.7160496712 0.7064827085 0.5990839601 0.6796444654 0.6481720209 0.6065810919 0.7165006995 0.7976718545} {curve 0 0.1340042055 0.1640413404 0.3575843275 0.1446169019 0.2646814585 0.2656676769 0.2147038579 0.06860940903 0.2929667532 0.1296834797 0.1288010478 0.2489254922 0.1522114277 0.1940581352 0.2203479856 0.1010205746 0.1351878047} {curve 9.367863095e-05 0.1561876982 0.08101774752 0.180480808 0.1688809693 0.1830150485 0.1982172877 0.09774444997 0.1465712637 0.1552320272 0.1047228053 0.1151721701 0.1024464965 0.1186000481 0.108225815 0.123526901 0.1467743814 0.03133957833}}
@@ -286,7 +286,7 @@ push $N290b2840
    xpos -6
    ypos -222
   }
-set N2928e1e0 [stack 0]
+set N225d8930 [stack 0]
   Dot {
    name Dot1
    xpos -116
@@ -297,22 +297,9 @@ set N2928e1e0 [stack 0]
    expr0 max(r,g,b)
    name achromatic
    xpos -150
-   ypos -177
+   ypos -178
   }
-set N29297e70 [stack 0]
-push $N2928e1e0
-  Merge2 {
-   inputs 2
-   operation minus
-   bbox B
-   Achannels rgb
-   Bchannels rgb
-   output rgb
-   name Merge2
-   xpos -40
-   ypos -177
-  }
-push $N29297e70
+set N225e2510 [stack 0]
   Expression {
    temp_name0 c_r
    temp_expr0 1-r
@@ -325,27 +312,48 @@ push $N29297e70
    expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
    name toe
    xpos -150
-   ypos -129
+   ypos -130
    disable {{parent.shd_rolloff==0}}
    addUserKnob {20 Params_tab l Params}
    addUserKnob {7 thr t "complement of threshold"}
    thr {{parent.shd_rolloff}}
   }
+  Expression {
+   expr0 abs(r)
+   expr1 abs(g)
+   expr2 abs(b)
+   channel3 none
+   name abs
+   xpos -150
+   ypos -82
+  }
+push $N225e2510
+push $N225d8930
   Merge2 {
    inputs 2
-   operation divide
+   operation minus
    bbox B
    Achannels rgb
    Bchannels rgb
    output rgb
-   name Merge3
+   name Merge2
    xpos -40
-   ypos -129
+   ypos -178
+  }
+  MergeExpression {
+   inputs 2
+   expr0 Ar==0?0:Br/Ar
+   expr1 Ag==0?0:Bg/Ag
+   expr2 Ab==0?0:Bb/Ab
+   channel3 none
+   name MergeDivide
+   xpos -40
+   ypos -82
   }
   Output {
    name Output
    xpos -40
-   ypos -58
+   ypos -10
   }
  end_group
  CurveTool {

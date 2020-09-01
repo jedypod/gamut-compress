@@ -9,7 +9,7 @@ Group {
  addUserKnob {7 threshold t "threshold of color distance to visualize. 1.0 is the edge of the gamut boundary. 0.0 is all colors." R 0 1.2}
  threshold 1
  addUserKnob {7 shd_rolloff l "shd rolloff" R 0 0.1}
- shd_rolloff 0.03
+ shd_rolloff 0.008
  addUserKnob {4 bg t "choose bg to put behind result colors" M {checkerboard "solid color"}}
  addUserKnob {41 color T Fill1.color}
 }
@@ -17,7 +17,7 @@ Group {
   inputs 0
   name Input
   xpos -40
-  ypos -285
+  ypos -250
  }
  Dot {
   name Dot1
@@ -25,50 +25,47 @@ Group {
   note_font_size 24
   note_font_color 0xff
   xpos -6
-  ypos -174
+  ypos -198
  }
-set N298bb010 [stack 0]
+set N402f2fa0 [stack 0]
  Dot {
   name Dot2
   note_font "Helvetica Bold"
   note_font_size 24
   note_font_color 0xff
   xpos -116
-  ypos -174
+  ypos -198
  }
-set N29833c60 [stack 0]
+set N2a8a6560 [stack 0]
  Dot {
   name Dot5
   note_font "Helvetica Bold"
   note_font_size 24
   note_font_color 0xff
   xpos -226
-  ypos -174
+  ypos -198
  }
-set N29851320 [stack 0]
+set N2a90f4c0 [stack 0]
+ Dot {
+  name Dot6
+  note_font "Helvetica Bold"
+  note_font_size 24
+  note_font_color 0xff
+  xpos -336
+  ypos -198
+ }
  Expression {
   channel0 {rgba.red rgba.green rgba.blue none}
   expr0 max(r,g,b)
+  channel1 none
+  channel2 none
+  channel3 none
   name achromatic
   note_font Helvetica
   xpos -370
-  ypos -129
+  ypos -153
  }
-set N298561c0 [stack 0]
-push $N29851320
- Merge2 {
-  inputs 2
-  operation minus
-  bbox B
-  Achannels rgb
-  Bchannels rgb
-  output rgb
-  name Merge2
-  note_font Helvetica
-  xpos -260
-  ypos -129
- }
-push $N298561c0
+set N2a92aeb0 [stack 0]
  Expression {
   temp_name0 c_r
   temp_expr0 1-r
@@ -82,35 +79,55 @@ push $N298561c0
   name toe
   note_font Helvetica
   xpos -370
-  ypos -81
+  ypos -118
   disable {{parent.shd_rolloff==0}}
   addUserKnob {20 Params_tab l Params}
   addUserKnob {7 thr t "complement of threshold"}
   thr {{parent.shd_rolloff}}
  }
+ Expression {
+  expr0 abs(r)
+  expr1 abs(g)
+  expr2 abs(b)
+  name abs
+  xpos -370
+  ypos -82
+ }
+push $N2a92aeb0
+push $N2a90f4c0
  Merge2 {
   inputs 2
-  operation divide
+  operation minus
   bbox B
   Achannels rgb
   Bchannels rgb
   output rgb
-  name Merge3
+  name Merge2
   note_font Helvetica
   xpos -260
-  ypos -81
+  ypos -153
  }
-set N297c17d0 [stack 0]
+ MergeExpression {
+  inputs 2
+  expr0 Ar==0?0:Br/Ar
+  expr1 Ag==0?0:Bg/Ag
+  expr2 Ab==0?0:Bb/Ab
+  channel3 none
+  name MergeDivide
+  xpos -260
+  ypos -82
+ }
+set N39140210 [stack 0]
  Dot {
   name Dot4
   note_font "Helvetica Bold"
   note_font_size 24
   note_font_color 0xff
   xpos -226
-  ypos 66
+  ypos 42
  }
-push $N297c17d0
-push $N29833c60
+push $N39140210
+push $N2a8a6560
  MergeExpression {
   inputs 2
   temp_name0 limit
@@ -134,7 +151,7 @@ push $N29833c60
   xpos -116
   ypos -30
  }
-push $N298bb010
+push $N402f2fa0
  Fill {
   output rgb
   color 0.18
@@ -189,7 +206,7 @@ push $N298bb010
   name switch_distance
   note_font Helvetica
   xpos -40
-  ypos 63
+  ypos 39
  }
  Output {
   name Output
