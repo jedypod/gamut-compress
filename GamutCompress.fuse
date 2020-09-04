@@ -174,7 +174,7 @@ function Process(req)
     
     local params
     if (lastreqtime ~= req.Time - 1) then
-        local params = node:GetParamBlock(SolidParams)
+        params = node:GetParamBlock(SolidParams)
     end
     lastreqtime = req.Time
 
