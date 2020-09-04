@@ -163,6 +163,7 @@ function Create()
   })
 end
 
+local lastreqtime = -2
 
 function Process(req)
   local src = InImage:GetValue(req)
@@ -170,7 +171,12 @@ function Process(req)
 
   if not req:IsPreCalc() then
     local node = DVIPComputeNode(req, "SolidKernel", SolidKernel, "SolidParams", SolidParams)
-    local params = node:GetParamBlock(SolidParams)
+    
+    local params
+    if (lastreqtime ~= req.Time - 1) then
+        local params = node:GetParamBlock(SolidParams)
+    end
+    lastreqtime = req.Time
 
     params.threshold_c = InThresholdR:GetValue(req).Value
     params.threshold_m = InThresholdG:GetValue(req).Value
