@@ -1,5 +1,5 @@
 uniform sampler2D frontTex, matteTex, selectiveTex;
-uniform float power, shd_rolloff, cyan, magenta, yellow, adsk_result_w, adsk_result_h;
+uniform float cyan, magenta, yellow, adsk_result_w, adsk_result_h;
 uniform int working_colorspace;
 uniform bool invert;
 uniform vec3 threshold;
@@ -50,30 +50,6 @@ float acescc_to_lin(float val) {
   }
 }
 
-// calculate compressed distance
-float compress(float x, float l, float t, float p, bool invert) {
-  float cdist;
-  // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
-  float s = (l-t)/pow(pow((1.0-t)/(l-t),-p)-1.0,1.0/p); // calc y=1 intersect
-  if (l < 1.0001) {
-    return x; // disable compression, avoid nan
-  }
-  if (x < t) {
-    cdist = x;
-  } 
-  else {
-    if (!invert) {
-      cdist = t+s*((x-t)/s)/(pow(1.0+pow((x-t)/s,p),1.0/p)); // compress
-    } else {
-      if (x > (t + s)) {
-        cdist = x; // avoid singularity
-      }
-      cdist = t+s*pow(-(pow((x-t)/s,p)/(pow((x-t)/s,p)-1.0)),1.0/p); // uncompress
-    }
-  }
-  return cdist;
-}
-
 void main() {
   vec2 coords = gl_FragCoord.xy / vec2( adsk_result_w, adsk_result_h );
   // source pixels
@@ -81,7 +57,7 @@ void main() {
   float alpha = texture2D(matteTex, coords).g;
   float select = texture2D(selectiveTex, coords).g;
 
-  // Working colorspace to linear
+  // Linearize working colorspace
   if (working_colorspace == 1) {
     rgb.x = acescct_to_lin(rgb.x);
     rgb.y = acescct_to_lin(rgb.y);
@@ -92,52 +68,38 @@ void main() {
     rgb.z = acescc_to_lin(rgb.z);
   } 
 
-  // thr is the percentage of the core gamut to protect: the complement of threshold.
-  vec3 thr = vec3(
-    1.0-max(0.00001, threshold.x),
-    1.0-max(0.00001, threshold.y),
-    1.0-max(0.00001, threshold.z));
+  // Amount of outer gamut to affect
+  vec3 th = 1.0-threshold;
   
-  // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
-  // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).  
-  vec3 lim;
-  lim = vec3(cyan+1.0, magenta+1.0, yellow+1.0);
+  // Distance limit: How far beyond the gamut boundary to compress
+  vec3 dl = 1.0+vec3(cyan, magenta, yellow);
 
-  // achromatic axis 
-  float ach = max(rgb.x, max(rgb.y, rgb.z));
+  // Calculate scale so compression function passes through distance limit: (x=dl, y=1)
+  vec3 s;
+  s.x = (1.0-th.x)/sqrt(max(1.001, dl.x)-1.0);
+  s.y = (1.0-th.y)/sqrt(max(1.001, dl.y)-1.0);
+  s.z = (1.0-th.z)/sqrt(max(1.001, dl.z)-1.0);
 
-  // achromatic shadow rolloff
-  float ach_shd;
-  if (shd_rolloff < 0.004) {
-    // disable shadow rolloff functionality. 
-    // values below 0.004 cause strange behavior, actually increasing distance in some cases.
-    // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
-    ach_shd = abs(ach);
+  // Achromatic axis
+  float ac = max(rgb.x, max(rgb.y, rgb.z));
+
+  // Inverse RGB Ratios: distance from achromatic axis
+  vec3 d = ac==0.0?vec3(0.0):(ac-rgb)/abs(ac);
+
+  vec3 cd; // Compressed distance
+  // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj
+  if (!invert) {
+    cd.x = d.x<th.x?d.x:s.x*sqrt(d.x-th.x+s.x*s.x/4.0)-s.x*sqrt(s.x*s.x/4.0)+th.x;
+    cd.y = d.y<th.y?d.y:s.y*sqrt(d.y-th.y+s.y*s.y/4.0)-s.y*sqrt(s.y*s.y/4.0)+th.y;
+    cd.z = d.z<th.z?d.z:s.z*sqrt(d.z-th.z+s.z*s.z/4.0)-s.z*sqrt(s.z*s.z/4.0)+th.z;
   } else {
-    // lift ach below threshold using a tanh compression function. 
-    // this reduces large distance values in shadow grain, which can cause differences when inverting.
-    ach_shd = 1.0-((1.0-ach)<(1.0-shd_rolloff)?(1.0-ach):(1.0-shd_rolloff)+shd_rolloff*tanh((((1.0-ach)-(1.0-shd_rolloff))/shd_rolloff)));
-  } 
+    cd.x = d.x<th.x?d.x:pow(d.x-th.x+s.x*sqrt(s.x*s.x/4.0),2.0)/(s.x*s.x)-s.x*s.x/4.0+th.x;
+    cd.y = d.y<th.y?d.y:pow(d.y-th.y+s.y*sqrt(s.y*s.y/4.0),2.0)/(s.y*s.y)-s.y*s.y/4.0+th.y;
+    cd.z = d.z<th.z?d.z:pow(d.z-th.z+s.z*sqrt(s.z*s.z/4.0),2.0)/(s.z*s.z)-s.z*s.z/4.0+th.z;
+  }
 
-  // distance from the achromatic axis for each color component aka inverse rgb ratios
-  // distance is normalized by achromatic, so that 1.0 is at gamut boundary. avoid 0 div
-  vec3 dist;
-  dist.x = ach_shd == 0.0 ? 0.0 : (ach-rgb.x)/ach_shd;
-  dist.y = ach_shd == 0.0 ? 0.0 : (ach-rgb.y)/ach_shd;
-  dist.z = ach_shd == 0.0 ? 0.0 : (ach-rgb.z)/ach_shd;
-
-  // compress distance with user controlled parameterized shaper function
-  vec3 cdist = vec3(
-    compress(dist.x, lim.x, thr.x, power, invert),
-    compress(dist.y, lim.y, thr.y, power, invert),
-    compress(dist.z, lim.z, thr.z, power, invert));
-
-  // recalculate rgb from compressed distance and achromatic
-  // effectively this scales each color component relative to achromatic axis by the compressed distance
-  vec3 crgb = vec3(
-    ach-cdist.x*ach_shd,
-    ach-cdist.y*ach_shd,
-    ach-cdist.z*ach_shd);
+  // Inverse RGB Ratios to RGB
+  vec3 crgb = ac-cd*abs(ac);
 
   // Linear to working colorspace
   if (working_colorspace == 1) {

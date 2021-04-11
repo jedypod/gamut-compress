@@ -19,31 +19,11 @@ the inner 80% of the gamut will be unaffected and
 out of gamut values will be compressed into 
 the outer 20% of the gamut's color volume.
 
-Power
-Adjust the exponent of the compression function. 1 = Reinhard. 
-Higher values have C2 continuity and result in a more 
-aggressive curve, which preserves more color purity or saturation.
-Be wary of high values if accurate inversion is important to you.
-
-Shadow Rolloff
-Reduce gamut compression in dark areas below specified value.
-Helps reduce invertability issues in negative values from grain.
-
 Max Distance
 Per color component control to specify what distance will be 
 compressed to the gamut boundary. For example, 
 a value of cyan=0.2 will map colors with a distance of red=1.2 from 
 the achromatic axis to red=1.0, which is the gamut boundary.
-
-Calculate Max Distance
-A helper to calculate the max distance that might occur when 
-mapping from a particular source color gamut. For example 
-when mapping from AlexaWideGamut to ACEScg, the max distance
-of magenta will be highest and the other two components will be lower.
-Setting these distance values according to the likely distances in the 
-source gamut helps avoid unwanted shifts in color. The default is set to
-a good average among many digital cinema camera gamuts, but you may
-want to tweak these values for your needs.
 
 Direction
 Specifies whether to apply or inverse the gamut compression operation.
@@ -65,32 +45,22 @@ https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-map
       </Uniform>
       <Uniform Inc="0.01" Tooltip="Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." 
         Row="0" Col="0" Page="0" IconType="None" ValueType="Position" Type="vec3" ChannelName="threshold" DisplayName="threshold" Name="threshold">
-        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        <SubUniform ResDependent="None" Max="0.3" Min="0.0" Default="0.15">
         </SubUniform>
-        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        <SubUniform ResDependent="None" Max="0.3" Min="0.0" Default="0.15">
         </SubUniform>
-        <SubUniform ResDependent="None" Max="0.6" Min="0.0" Default="0.2">
+        <SubUniform ResDependent="None" Max="0.3" Min="0.0" Default="0.15">
         </SubUniform>
       </Uniform>
-      <Uniform ResDependent="None" Max="4" Min="1" Default="1.2" Inc="0.01" 
-        Tooltip="Adjust the exponent of the compression function. 1 = Reinhard. Higher values have C2 continuity and result in a more aggressive curve which preserves more color purity or saturation.
-
-Be wary of high values if accurate inversion is important to you." 
-        Row="2" Col="0" Page="0" Type="float" ChannelName="power" DisplayName="power" Name="power">
-      </Uniform>
-      <Uniform ResDependent="None" Max="0.03" Min="0.0" Default="0.0" Inc="0.001" 
-        Tooltip="Shadow rolloff reduces the gamut compression effect below the specified achromatic pixel value. This reduces invertability issues with negative pixels in shadow grain. Make sure there is only shadow grain below the threshold you specify."
-        Row="3" Col="0" Page="0" Type="float" ChannelName="shd_rolloff" DisplayName="shd rolloff" Name="shd_rolloff">
-      </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.09" Inc="0.01" 
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.1" Inc="0.01" 
         Tooltip="Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." 
         Row="0" Col="1" Page="0" Type="float" ChannelName="cyan" DisplayName="cyan" Name="cyan">
       </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.24" Inc="0.01" 
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.2" Inc="0.01" 
         Tooltip="Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." 
         Row="1" Col="1" Page="0" Type="float" ChannelName="magenta" DisplayName="magenta" Name="magenta">
       </Uniform>
-      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.12" Inc="0.01" 
+      <Uniform ResDependent="None" Max="1.0" Min="0.0" Default="0.1" Inc="0.01" 
         Tooltip="Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary."
         Row="2" Col="1" Page="0" Type="float" ChannelName="yellow" DisplayName="yellow" Name="yellow">
       </Uniform>

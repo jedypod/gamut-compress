@@ -1,95 +1,46 @@
+/*  GamutCompress v0.7
+    Written by Jed Smith with lots of help from the ACES Gamut Mapping VWG
+    https://github.com/jedypod
+    https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective
+    https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group
+*/
 kernel GamutCompression : public ImageComputationKernel<ePixelWise> {
   Image<eRead, eAccessPoint, eEdgeClamped> src;
   Image<eWrite> dst;
 
   param:
-    float3 threshold;
-    float p;
-    float shd_rolloff;
-    float cyan;
-    float magenta;
-    float yellow;
+    float3 th;
+    float3 dl;
     bool invert;
 
   local:
-    float3 thr;
-    float3 lim;
+    float3 s;
 
   void init() {
-    // thr is the percentage of the core gamut to protect: the complement of threshold.
-    thr = float3(1.0f-threshold.x, 1.0f-threshold.y, 1.0f-threshold.z);
-
-    // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
-    // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).
-    lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
-  }
-
-  // calculate hyperbolic tangent
-  float tanh( float in) {
-    float f = exp(2.0f*in);
-    return (f-1.0f)/(f+1.0f);
-  }
-
-  // calculate compressed distance
-  float compress(float x, float l, float t) {
-    float cdist;
-    // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
-    // suggested by James Eggleton https://community.acescentral.com/t/gamut-mapping-compression-curves/3073/10
-    float s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
-    if (l < 1.0001) {
-      return x; // disable compression, avoid nan
-    }
-    if (x < t) {
-      cdist = x;
-    } else {
-      if (invert == 0) {
-        cdist = t+s*((x-t)/s)/(pow(1.0f+pow((x-t)/s,p),1.0f/p)); // compress
-      } else {
-        if (x > (t + s)) {
-          cdist = x; // avoid singularity
-        }
-        cdist = t+s*pow(-(pow((x-t)/s,p)/(pow((x-t)/s,p)-1.0f)),1.0f/p); // uncompress
-      }
-    }
-    return cdist;
+    // Pre-calculate scale so compression function passes through distance limit: (x=dl, y=1)
+    s = ((float3)(1.0f)-th)/sqrt(max((float3)(1.001f),dl)-(float3)(1.0f));
   }
 
   void process() {
-    // source pixels
-    SampleType(src) rgba = src();
-    float3 rgb = float3(rgba.x, rgba.y, rgba.z);
+    float3 rgb = float3(src().x, src().y, src().z);
 
-    // achromatic axis 
-    float ach = max(rgb.x, max(rgb.y, rgb.z));
+    float ac = max(rgb.x, max(rgb.y, rgb.z)); // Achromatic axis
+    // Inverse RGB Ratios: distance from achromatic axis
+    float3 d = ac == 0.0f ? (float3)(0.0f) : (ac-rgb)/fabs(ac);
 
-    // achromatic shadow rolloff
-    float ach_shd;
-    if (shd_rolloff < 0.004f) {
-      // disable shadow rolloff functionality. 
-      // values below 0.004 cause strange behavior, actually increasing distance in some cases.
-      // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
-      ach_shd = fabs(ach);
+    float3 cd; // Compressed distance
+    // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj
+    if (!invert) {
+      cd.x = d.x<th.x?d.x:s.x*sqrt(d.x-th.x+s.x*s.x/4.0f)-s.x*sqrt(s.x*s.x/4.0f)+th.x;
+      cd.y = d.y<th.y?d.y:s.y*sqrt(d.y-th.y+s.y*s.y/4.0f)-s.y*sqrt(s.y*s.y/4.0f)+th.y;
+      cd.z = d.z<th.z?d.z:s.z*sqrt(d.z-th.z+s.z*s.z/4.0f)-s.z*sqrt(s.z*s.z/4.0f)+th.z;
     } else {
-      // lift ach below threshold using a tanh compression function. 
-      // this reduces large distance values in shadow grain, which can cause differences when inverting.
-      ach_shd = 1.0f-((1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
-    } 
-    
-    // distance from the achromatic axis for each color component aka inverse rgb ratios.
-    // we normalize the distance by dividing by achromatic, so that 1.0 is at gamut boundary, avoid 0 division errors.
-    float3 dist = ach_shd == 0.0f ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;
+      cd.x = d.x<th.x?d.x:pow(d.x-th.x+s.x*sqrt(s.x*s.x/4.0f),2.0f)/(s.x*s.x)-s.x*s.x/4.0f+th.x;
+      cd.y = d.y<th.y?d.y:pow(d.y-th.y+s.y*sqrt(s.y*s.y/4.0f),2.0f)/(s.y*s.y)-s.y*s.y/4.0f+th.y;
+      cd.z = d.z<th.z?d.z:pow(d.z-th.z+s.z*sqrt(s.z*s.z/4.0f),2.0f)/(s.z*s.z)-s.z*s.z/4.0f+th.z;
+    }
 
-    // compress distance with parameterized compression function
-    float3 cdist = float3(
-      compress(dist.x, lim.x, thr.x),
-      compress(dist.y, lim.y, thr.y),
-      compress(dist.z, lim.z, thr.z));
-    
-    // recalculate rgb from compressed distance and achromatic
-    // effectively this scales each color component relative to achromatic axis by the compressed distance
-    float3 crgb = ach-cdist*ach_shd;
-
-    // write to output
-    dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);
+    rgb = ac-cd*fabs(ac);
+    dst() = float4(rgb.x, rgb.y, rgb.z, src().w);
   }
 };

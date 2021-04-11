@@ -5,62 +5,52 @@ Group {
  addUserKnob {20 GamutCompress}
  addUserKnob {6 use_gpu l "use gpu" t "use gpu for blinkscript node" -STARTLINE}
  use_gpu true
- addUserKnob {26 "" +STARTLINE}
- addUserKnob {18 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." R 0 0.6}
- threshold 0.2
- addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {7 power t "Adjust the exponent of the compression function. 1 = Reinhard. Higher values have C2 continuity and result in a more \"aggressive\" curve which preserves more color purity or saturation.\n\nBe wary of high values if accurate inversion is important to you." R 1 4}
- power 1.2
- addUserKnob {7 shd_rolloff l "shd rolloff" t "Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain. Make sure there is only shadow grain below the threshold you specify." R 0 0.03}
- shd_rolloff 0
- addUserKnob {26 distance_limit_label l " " t "Specifies the maximum distance beyond the gamut boundary to map to the gamut boundary for each color component." T "<b>max distance limit"}
- addUserKnob {7 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." R 0.001 1}
- cyan 0.09
- addUserKnob {7 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." R 0.001 1}
- magenta 0.24
- addUserKnob {7 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." R 0.001 1}
- yellow 0.12
- addUserKnob {22 reset t "Reset knobs to default values. Distance limits are calculated based on an the average of a selection of digital cinema cameras." T "n = nuke.thisNode()\nnuke.root().begin()\ndefaults = \{\n    'threshold': 0.2,\n    'power': 1.2,\n    'shd_rolloff': 0.0,\n    'cyan': 0.09,\n    'magenta':0.24,\n    'yellow': 0.12,\n\}\nfor k, v in defaults.items():\n    n\[k].setValue(v)" +STARTLINE}
  addUserKnob {26 ""}
+ addUserKnob {18 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." R 0 0.2}
+ threshold 0.15
+ addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ addUserKnob {35 distance_presets l distance t "choose distance presets for common digital cinema camera source gamuts" M {"presets/ACEScg from Filmlight E-Gamut" "knobs this \{cyan 0.122 magenta 0.201 yellow 0.139\}" "presets/ACEScg from Alexa Wide Gamut" "knobs this \{cyan 0.078 magenta 0.22 yellow 0.056\}" "presets/ACEScg from RedWideGamutRGB" "knobs this \{cyan 0.143 magenta 0.239 yellow 0.316\}" "presets/ACEScg from Sony S-Gamut3.Cine" "knobs this \{cyan 0.074 magenta 0.264 yellow 0.049\}" "presets/ACEScg from Sony S-Gamut3" "knobs this \{cyan 0.089 magenta 0.182 yellow 0.004\}" "presets/ACEScg from Panasonic V-Gamut" "knobs this \{cyan 0.06 magenta 0.148 yellow 0.012\}"}}
+ addUserKnob {7 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." R 0 0.4}
+ cyan 0.1
+ addUserKnob {7 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." R 0 0.4}
+ magenta 0.2
+ addUserKnob {7 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." R 0 0.4}
+ yellow 0.1
  addUserKnob {4 direction M {forward inverse}}
  addUserKnob {20 info_tab l Info}
- addUserKnob {26 info_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>GamutCompress</b><br>\nmaps out of gamut colors back into gamut.\n<br><br><a href=https://github.com/jedypod/gamut-compress>Documentation</a>"}
+ addUserKnob {26 info_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>GamutCompress v0.7</b><br>\nmaps out of gamut colors back into gamut.\n<br><br><a href=https://github.com/jedypod/gamut-compress>Documentation</a>"}
  addUserKnob {26 about_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc><br>\n<b>About</b><br>\nWritten by <a href=https://github.com/jedypod color=red>Jed Smith</a> <br> with <a href=https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective>help</a> from the <a href=https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group>ACES Gamut Mapping VWG</a>"}
 }
  Input {
   inputs 0
   name Input
   xpos -40
-  ypos -34
+  ypos -10
  }
  AddChannels {
   name AddChannels
   xpos -40
-  ypos 32
+  ypos 44
  }
  BlinkScript {
-  recompileCount 0
+  recompileCount 1
   ProgramGroup 1
-  KernelDescription "2 \"GamutCompression\" iterate pixelWise 1fb8436bea38392fe899f6abe1c61df92c39765596a6c0f62126f80a936bab70 2 \"src\" Read Point \"dst\" Write Point 7 \"threshold\" Float 3 AAAAAAAAAAAAAAAAAAAAAA== \"p\" Float 1 AAAAAA== \"shd_rolloff\" Float 1 AAAAAA== \"cyan\" Float 1 AAAAAA== \"magenta\" Float 1 AAAAAA== \"yellow\" Float 1 AAAAAA== \"invert\" Bool 1 AA== 7 \"threshold\" 3 1 \"p\" 1 1 \"shd_rolloff\" 1 1 \"cyan\" 1 1 \"magenta\" 1 1 \"yellow\" 1 1 \"invert\" 1 1 2 \"thr\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA== \"lim\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA=="
-  kernelSource "kernel GamutCompression : public ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float3 threshold;\n    float p;\n    float shd_rolloff;\n    float cyan;\n    float magenta;\n    float yellow;\n    bool invert;\n\n  local:\n    float3 thr;\n    float3 lim;\n\n  void init() \{\n    // thr is the percentage of the core gamut to protect: the complement of threshold.\n    thr = float3(1.0f-threshold.x, 1.0f-threshold.y, 1.0f-threshold.z);\n\n    // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.\n    // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).\n    lim = float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);\n  \}\n\n  // calculate hyperbolic tangent\n  float tanh( float in) \{\n    float f = exp(2.0f*in);\n    return (f-1.0f)/(f+1.0f);\n  \}\n\n  // calculate compressed distance\n  float compress(float x, float l, float t) \{\n    float cdist;\n    // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek\n    // suggested by James Eggleton https://community.acescentral.com/t/gamut-mapping-compression-curves/3073/10\n    float s = (l-t)/pow(pow((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect\n    if (l < 1.0001) \{\n      return x; // disable compression, avoid nan\n    \}\n    if (x < t) \{\n      cdist = x;\n    \} else \{\n      if (invert == 0) \{\n        cdist = t+s*((x-t)/s)/(pow(1.0f+pow((x-t)/s,p),1.0f/p)); // compress\n      \} else \{\n        if (x > (t + s)) \{\n          cdist = x; // avoid singularity\n        \}\n        cdist = t+s*pow(-(pow((x-t)/s,p)/(pow((x-t)/s,p)-1.0f)),1.0f/p); // uncompress\n      \}\n    \}\n    return cdist;\n  \}\n\n  void process() \{\n    // source pixels\n    SampleType(src) rgba = src();\n    float3 rgb = float3(rgba.x, rgba.y, rgba.z);\n\n    // achromatic axis \n    float ach = max(rgb.x, max(rgb.y, rgb.z));\n\n    // achromatic shadow rolloff\n    float ach_shd;\n    if (shd_rolloff < 0.004f) \{\n      // disable shadow rolloff functionality. \n      // values below 0.004 cause strange behavior, actually increasing distance in some cases.\n      // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.\n      ach_shd = fabs(ach);\n    \} else \{\n      // lift ach below threshold using a tanh compression function. \n      // this reduces large distance values in shadow grain, which can cause differences when inverting.\n      ach_shd = 1.0f-((1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*tanh((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));\n    \} \n    \n    // distance from the achromatic axis for each color component aka inverse rgb ratios.\n    // we normalize the distance by dividing by achromatic, so that 1.0 is at gamut boundary, avoid 0 division errors.\n    float3 dist = ach_shd == 0.0f ? float3(0.0f, 0.0f, 0.0f) : (ach-rgb)/ach_shd;\n\n    // compress distance with parameterized compression function\n    float3 cdist = float3(\n      compress(dist.x, lim.x, thr.x),\n      compress(dist.y, lim.y, thr.y),\n      compress(dist.z, lim.z, thr.z));\n    \n    // recalculate rgb from compressed distance and achromatic\n    // effectively this scales each color component relative to achromatic axis by the compressed distance\n    float3 crgb = ach-cdist*ach_shd;\n\n    // write to output\n    dst() = float4(crgb.x, crgb.y, crgb.z, rgba.w);\n  \}\n\};"
+  KernelDescription "2 \"GamutCompression\" iterate pixelWise c0d43fd0eba9efe2ea0c3fb1b173b0116570ea6ec879ba3765d9333e4c27883a 2 \"src\" Read Point \"dst\" Write Point 3 \"th\" Float 3 AAAAAAAAAAAAAAAAAAAAAA== \"dl\" Float 3 AAAAAAAAAAAAAAAAAAAAAA== \"invert\" Bool 1 AA== 3 \"th\" 3 1 \"dl\" 3 1 \"invert\" 1 1 1 \"s\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA=="
+  kernelSource "kernel GamutCompression : public ImageComputationKernel<ePixelWise> \{\n  Image<eRead, eAccessPoint, eEdgeClamped> src;\n  Image<eWrite> dst;\n\n  param:\n    float3 th;\n    float3 dl;\n    bool invert;\n\n  local:\n    float3 s;\n\n  void init() \{\n    // Pre-calculate scale so compression function passes through distance limit: (x=dl, y=1)\n    s = ((float3)(1.0f)-th)/sqrt(max((float3)(1.001f),dl)-(float3)(1.0f));\n  \}\n\n  void process() \{\n    float3 rgb = float3(src().x, src().y, src().z);\n\n    float ac = max(rgb.x, max(rgb.y, rgb.z)); // Achromatic axis\n    // Inverse RGB Ratios: distance from achromatic axis\n    float3 d = ac == 0.0f ? (float3)(0.0f) : (ac-rgb)/fabs(ac);\n\n    float3 cd; // Compressed distance\n    // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj\n    if (!invert) \{\n      cd.x = d.x<th.x?d.x:s.x*sqrt(d.x-th.x+s.x*s.x/4.0f)-s.x*sqrt(s.x*s.x/4.0f)+th.x;\n      cd.y = d.y<th.y?d.y:s.y*sqrt(d.y-th.y+s.y*s.y/4.0f)-s.y*sqrt(s.y*s.y/4.0f)+th.y;\n      cd.z = d.z<th.z?d.z:s.z*sqrt(d.z-th.z+s.z*s.z/4.0f)-s.z*sqrt(s.z*s.z/4.0f)+th.z;\n    \} else \{\n      cd.x = d.x<th.x?d.x:pow(d.x-th.x+s.x*sqrt(s.x*s.x/4.0f),2.0f)/(s.x*s.x)-s.x*s.x/4.0f+th.x;\n      cd.y = d.y<th.y?d.y:pow(d.y-th.y+s.y*sqrt(s.y*s.y/4.0f),2.0f)/(s.y*s.y)-s.y*s.y/4.0f+th.y;\n      cd.z = d.z<th.z?d.z:pow(d.z-th.z+s.z*sqrt(s.z*s.z/4.0f),2.0f)/(s.z*s.z)-s.z*s.z/4.0f+th.z;\n    \}\n\n    rgb = ac-cd*fabs(ac);\n    dst() = float4(rgb.x, rgb.y, rgb.z, src().w);\n  \}\n\};"
   useGPUIfAvailable {{parent.use_gpu}}
   rebuild ""
-  GamutCompression_threshold {{parent.threshold} {parent.threshold} {parent.threshold}}
-  GamutCompression_p {{parent.power}}
-  GamutCompression_shd_rolloff {{parent.shd_rolloff}}
-  GamutCompression_cyan {{parent.cyan}}
-  GamutCompression_magenta {{parent.magenta}}
-  GamutCompression_yellow {{parent.yellow}}
+  GamutCompression_th {{1-parent.threshold.r} {1-parent.threshold.g} {1-parent.threshold.b}}
+  GamutCompression_dl {{1+parent.cyan} {1+parent.magenta} {1+parent.yellow}}
   GamutCompression_invert {{parent.direction}}
   rebuild_finalise ""
   name GamutCompress
   selected true
   xpos -40
-  ypos 80
+  ypos 104
  }
  Output {
   name Output
   xpos -40
-  ypos 182
+  ypos 170
  }
 end_group

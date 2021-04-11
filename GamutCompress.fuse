@@ -18,20 +18,9 @@ Percentage of the gamut to affect.
 If threshold is 0.2, the inner 80% of the gamut will be unaffected 
 and out of gamut values will be compressed into the outer 20% of the gamuts color volume.
 
-Power
-Adjust the exponent of the compression function. 1.0f = Reinhard.
-Higher values have C2 continuity and result in a more
-"aggressive" curve, which preserves more color purity / "saturation".
-Be wary of high values if accurate inversion is important to you.
-
-Shadow Rolloff
-Reduce gamut compression in dark areas below specified value.
-Helps reduce invertability issues in negative values from grain.
-Make sure there is only shadow grain below the threshold you specify.
-
 Max Distance
 Per color component control to specify what distance will be compressed to the gamut boundary. 
-For example, a value of cyan=0.2 will map colors with a distance of 
+For example, a value of d_c=0.2 will map colors with a distance of 
 red=1.2 from the achromatic axis to red=1.0, which is the gamut boundary.
 
 Direction
@@ -76,70 +65,54 @@ FuRegisterClass("GamutCompress", CT_Tool, {
 
 
 function Create()
-  InThresholdR = self:AddInput("threshold_c", "threshold_c", {
+  InThresholdR = self:AddInput("thr c", "thr c", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.2,
+    INP_Default = 0.15,
     INP_MinAllowed = 0.0001,
-    INP_MaxScale = 0.6,
+    INP_MaxScale = 0.3,
   })
 
-  InThresholdG = self:AddInput("threshold_m", "threshold_m", {
+  InThresholdG = self:AddInput("thr m", "thr m", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.2,
+    INP_Default = 0.15,
     INP_MinAllowed = 0.0001,
-    INP_MaxScale = 0.6,
+    INP_MaxScale = 0.3,
   })
 
-  InThresholdB = self:AddInput("threshold_y", "threshold_y", {
+  InThresholdB = self:AddInput("thr y", "thr y", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.2,
+    INP_Default = 0.15,
     INP_MinAllowed = 0.0001,
-    INP_MaxScale = 0.6,
+    INP_MaxScale = 0.3,
   })
 
-  InPower = self:AddInput("power", "power", {
-      LINKID_DataType = "Number",
-      INPID_InputControl = "SliderControl",
-      INP_Default = 1.2,
-      INP_MinAllowed = 1.0,
-      INP_MaxScale = 5.0,
-  })
-  
-  InShdRolloff = self:AddInput("shd rolloff", "shd rolloff", {
-      LINKID_DataType = "Number",
-      INPID_InputControl = "SliderControl",
-      INP_Default = 0.0,
-      INP_MinAllowed = 0.0,
-      INP_MaxScale = 0.03,
-  })
-  
   self:BeginControlNest("max distance limits", "max distance limits", true, {})
   
-  InCyan = self:AddInput("cyan", "cyan", {
+  InCyan = self:AddInput("dist c", "dist c", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.09,
+    INP_Default = 0.1,
     INP_MinAllowed = 0.0,
-    INP_MaxScale = 1.0,
+    INP_MaxScale = 0.4,
   })
   
-  InMagenta = self:AddInput("magenta", "magenta", {
+  InMagenta = self:AddInput("dist m", "dist m", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.24,
+    INP_Default = 0.2,
     INP_MinAllowed = 0.0,
-    INP_MaxScale = 1.0,
+    INP_MaxScale = 0.4,
   })
   
-  InYellow = self:AddInput("yellow", "yellow", {
+  InYellow = self:AddInput("dist y", "dist y", {
     LINKID_DataType = "Number",
     INPID_InputControl = "SliderControl",
-    INP_Default = 0.12,
+    INP_Default = 0.1,
     INP_MinAllowed = 0.0,
-    INP_MaxScale = 1.0,
+    INP_MaxScale = 0.4,
   })
   
   self:EndControlNest()
@@ -178,14 +151,12 @@ function Process(req)
     end
     lastreqtime = req.Time
 
-    params.threshold_c = InThresholdR:GetValue(req).Value
-    params.threshold_m = InThresholdG:GetValue(req).Value
-    params.threshold_y = InThresholdB:GetValue(req).Value
-    params.power = InPower:GetValue(req).Value
-    params.shd_rolloff = InShdRolloff:GetValue(req).Value
-    params.cyan = InCyan:GetValue(req).Value
-    params.magenta = InMagenta:GetValue(req).Value
-    params.yellow = InYellow:GetValue(req).Value
+    params.th_c = InThresholdR:GetValue(req).Value
+    params.th_m = InThresholdG:GetValue(req).Value
+    params.th_y = InThresholdB:GetValue(req).Value
+    params.d_c = InCyan:GetValue(req).Value
+    params.d_m = InMagenta:GetValue(req).Value
+    params.d_y = InYellow:GetValue(req).Value
     params.invert = InInvert:GetValue(req).Value
     params.srcCompOrder = src:IsMask() and 1 or 15
  
@@ -207,97 +178,60 @@ end
 
 
 SolidParams = [[
-  float threshold_c;
-  float threshold_m;
-  float threshold_y;
-  float power;
-  float shd_rolloff;
-  float cyan;
-  float magenta;
-  float yellow;
+  float th_c;
+  float th_m;
+  float th_y;
+  float d_c;
+  float d_m;
+  float d_y;
   int invert;
   int srcCompOrder;
 ]]
 
  
 SolidKernel = [[
-  // calculate compressed distance
-  __DEVICE__ float compress(float x, float l, float t, float p, bool invert) {
-    float cdist;
-    // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
-    float s = (l-t)/_powf(_powf((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
-    if (l < 1.0001f) {
-      return x; // disable compression, avoid nan
-    }
-    if (x < t) {
-      cdist = x;
-    } 
-    else {
-      if (invert == 0) {
-        cdist = t+s*((x-t)/s)/(_powf(1.0f+_powf((x-t)/s,p),1.0f/p)); // compress
-      } else {
-        if (x > (t + s)) {
-          cdist = x; // avoid singularity
-        }
-        cdist = t+s*_powf(-(_powf((x-t)/s,p)/(_powf((x-t)/s,p)-1.0f)),1.0f/p); // uncompress
-      }
-    }
-    return cdist;
+
+__KERNEL__ void SolidKernel(__CONSTANTREF__ SolidParams *params, __TEXTURE2D__ src, __TEXTURE2D_WRITE__ dst)
+{
+  DEFINE_KERNEL_ITERATORS_XY(x, y);
+  float4 rgba = _tex2DVecN(src, x, y, params->srcCompOrder);
+  float3 rgb = make_float3(rgba.x, rgba.y, rgba.z);
+
+  // Amount of outer gamut to affect
+  float3 th = 1.0f-make_float3(params->th_c, params->th_m, params->th_y);
+
+  // Distance limit: How far beyond the gamut boundary to compress
+  float3 dl = 1.0f+make_float3(params->d_c, params->d_m, params->d_y);
+
+  // Calculate scale so compression function passes through distance limit: (x=dl, y=1)
+  float3 s;
+  s.x = (1.0f-th.x)/_sqrtf(_fmaxf(1.001f, dl.x)-1.0f);
+  s.y = (1.0f-th.y)/_sqrtf(_fmaxf(1.001f, dl.y)-1.0f);
+  s.z = (1.0f-th.z)/_sqrtf(_fmaxf(1.001f, dl.z)-1.0f);
+  
+  // Achromatic axis
+  float ac = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
+
+  // Inverse RGB Ratios: distance from achromatic axis
+  float3 d = ac == 0.0f ? make_float3(0.0f) : (ac-rgb)/_fabs(ac);
+
+  float3 cd; // Compressed distance
+  // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj
+  if (params->invert == 0) {
+    cd.x = d.x<th.x?d.x:s.x*_sqrtf(d.x-th.x+s.x*s.x/4.0f)-s.x*_sqrtf(s.x*s.x/4.0f)+th.x;
+    cd.y = d.y<th.y?d.y:s.y*_sqrtf(d.y-th.y+s.y*s.y/4.0f)-s.y*_sqrtf(s.y*s.y/4.0f)+th.y;
+    cd.z = d.z<th.z?d.z:s.z*_sqrtf(d.z-th.z+s.z*s.z/4.0f)-s.z*_sqrtf(s.z*s.z/4.0f)+th.z;
+  } else {
+    cd.x = d.x<th.x?d.x:_powf(d.x-th.x+s.x*_sqrtf(s.x*s.x/4.0f),2.0f)/(s.x*s.x)-s.x*s.x/4.0f+th.x;
+    cd.y = d.y<th.y?d.y:_powf(d.y-th.y+s.y*_sqrtf(s.y*s.y/4.0f),2.0f)/(s.y*s.y)-s.y*s.y/4.0f+th.y;
+    cd.z = d.z<th.z?d.z:_powf(d.z-th.z+s.z*_sqrtf(s.z*s.z/4.0f),2.0f)/(s.z*s.z)-s.z*s.z/4.0f+th.z;
   }
 
-  __KERNEL__ void SolidKernel(__CONSTANTREF__ SolidParams *params, __TEXTURE2D__ src, __TEXTURE2D_WRITE__ dst)
-  {
-    DEFINE_KERNEL_ITERATORS_XY(x, y);
-    float4 rgb = _tex2DVecN(src, x, y, params->srcCompOrder);
+  // Inverse RGB Ratios to RGB
+  rgb = ac-cd*_fabs(ac);
 
-    // thr is the percentage of the core gamut to protect: the complement of threshold.
-    float3 thr = make_float3(
-      1.0f-_fmaxf(0.0001f, params->threshold_c),
-      1.0f-_fmaxf(0.0001f, params->threshold_m),
-      1.0f-_fmaxf(0.0001f, params->threshold_y));
-    
-    // lim is the max distance from the gamut boundary that will be compressed
-    // 0 is a no-op, 1 will compress colors from a distance of 2.0 from achromatic to the gamut boundary
-    // if method is Reinhard, use the limit as-is
-    float3 lim;
-    lim = make_float3(params->cyan+1.0f, params->magenta+1.0f, params->yellow+1.0f);
-    
-    // achromatic axis 
-    float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
+  rgba = make_float4(rgb.x, rgb.y, rgb.z, rgba.w);
+  _tex2DVec4Write(dst, x, y, rgba);
+}
 
-    // achromatic shadow rolloff
-    float ach_shd;
-    if (params->shd_rolloff < 0.004f) {
-      // disable shadow rolloff functionality. 
-      // values below 0.004 cause strange behavior, actually increasing distance in some cases.
-      // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
-      ach_shd = _fabs(ach);
-    } else {
-      // lift ach below threshold using a tanh compression function. 
-      // this reduces large distance values in shadow grain, which can cause differences when inverting.
-      ach_shd = 1.0f-((1.0f-ach)<(1.0f-params->shd_rolloff)?(1.0f-ach):(1.0f-params->shd_rolloff)+params->shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-params->shd_rolloff))/params->shd_rolloff)));
-    } 
-
-    // distance from the achromatic axis for each color component aka inverse rgb ratios
-    float3 dist;
-    dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
-    dist.y = ach_shd == 0.0f ? 0.0f : (ach-rgb.y)/ach_shd;
-    dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
-
-    // compress distance with user controlled parameterized shaper function
-    float3 cdist = make_float3(
-      compress(dist.x, lim.x, thr.x, params->power, params->invert),
-      compress(dist.y, lim.y, thr.y, params->power, params->invert),
-      compress(dist.z, lim.z, thr.z, params->power, params->invert));
-
-    // recalculate rgb from compressed distance and achromatic
-    // effectively this scales each color component relative to achromatic axis by the compressed distance
-    float4 crgb = make_float4(
-      ach-cdist.x*ach_shd,
-      ach-cdist.y*ach_shd,
-      ach-cdist.z*ach_shd,
-      rgb.w);
-
-    _tex2DVec4Write(dst, x, y, crgb);
-  }
 ]]

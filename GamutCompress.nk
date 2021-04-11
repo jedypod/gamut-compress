@@ -3,19 +3,19 @@ push $cut_paste_input
 Group {
  name GamutCompress
  addUserKnob {20 GamutCompress}
- addUserKnob {41 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." T compress.threshold}
- addUserKnob {41 power t "Adjust the exponent of the compression function. 1 = Reinhard. Higher values have C2 continuity and result in a more \"aggressive\" curve which preserves more color purity or saturation.\n\nBe wary of high values if accurate inv\nersion is important to you." T compress.power}
- addUserKnob {7 shd_rolloff l "shd rolloff" t "Shadow rolloff reduces the gamut compression effect below the specified pixel value. This reduces invertability issues with negative pixels in shadow grain." R 0 0.03}
- shd_rolloff 0
- addUserKnob {26 distance_limit_label l " " t "Specifies the maximum distance beyond the gamut boundary to map to the gamut boundary for each color component." T "<b>max distance limit"}
- addUserKnob {41 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." T compress.cyan}
- addUserKnob {41 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." T compress.magenta}
- addUserKnob {41 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." T compress.yellow}
- addUserKnob {22 reset t "Reset knobs to default values. Distance limits are calculated based on an the average of a selection of digital cinema cameras." T "n = nuke.thisNode()\nnuke.root().begin()\ndefaults = \{\n    'threshold': 0.2,\n    'power': 1.2,\n    'shd_rolloff': 0.0,\n    'cyan': 0.09,\n    'magenta':0.24,\n    'yellow': 0.12,\n\}\nfor k, v in defaults.items():\n    n\[k].setValue(v)" +STARTLINE}
- addUserKnob {26 ""}
+ addUserKnob {18 threshold t "Percentage of the outer gamut boundary to affect. A value of 0.2 means 20% of the outer gamut will be utilized for gamut compression." R 0 0.2}
+ threshold 0.15
+ addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ addUserKnob {35 distance_presets l distance t "choose distance presets for common digital cinema camera source gamuts" M {"presets/ACEScg from Filmlight E-Gamut" "knobs this \{cyan 0.122 magenta 0.201 yellow 0.139\}" "presets/ACEScg from Alexa Wide Gamut" "knobs this \{cyan 0.078 magenta 0.22 yellow 0.056\}" "presets/ACEScg from RedWideGamutRGB" "knobs this \{cyan 0.143 magenta 0.239 yellow 0.316\}" "presets/ACEScg from Sony S-Gamut3.Cine" "knobs this \{cyan 0.074 magenta 0.264 yellow 0.049\}" "presets/ACEScg from Sony S-Gamut3" "knobs this \{cyan 0.089 magenta 0.182 yellow 0.004\}" "presets/ACEScg from Panasonic V-Gamut" "knobs this \{cyan 0.06 magenta 0.148 yellow 0.012\}"}}
+ addUserKnob {7 cyan t "Maximum distance beyond the green-blue gamut boundary to compress to the gamut boundary." R 0 0.4}
+ cyan 0.1
+ addUserKnob {7 magenta t "Maximum distance beyond the blue-red gamut boundary to compress to the gamut boundary." R 0 0.4}
+ magenta 0.2
+ addUserKnob {7 yellow t "Maximum distance beyond the red-green gamut boundary to compress to the gamut boundary." R 0 0.4}
+ yellow 0.1
  addUserKnob {4 direction M {forward inverse}}
  addUserKnob {20 info_tab l Info}
- addUserKnob {26 info_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>GamutCompress</b><br>\nmaps out of gamut colors back into gamut.\n<br><br><a href=https://github.com/jedypod/gamut-compress>Documentation</a>"}
+ addUserKnob {26 info_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc>\n<b>GamutCompress v0.7</b><br>\nmaps out of gamut colors back into gamut.\n<br><br><a href=https://github.com/jedypod/gamut-compress>Documentation</a>"}
  addUserKnob {26 about_label l " " T "<style> a:link \{ color: #ccc \}</style>\n<font color=#ccc><br>\n<b>About</b><br>\nWritten by <a href=https://github.com/jedypod color=red>Jed Smith</a> <br> with <a href=https://community.acescentral.com/t/rgb-saturation-gamut-mapping-approach-and-a-comp-vfx-perspective>help</a> from the <a href=https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group>ACES Gamut Mapping VWG</a>"}
 }
  Input {
@@ -25,212 +25,102 @@ Group {
   ypos -298
  }
  Dot {
-  name Dot4
+  name Dot5
   xpos -6
-  ypos -198
+  ypos -186
  }
-set N358f7310 [stack 0]
- Dot {
-  name Dot2
-  xpos -226
-  ypos -198
- }
+set N50366260 [stack 0]
  Expression {
-  channel0 {rgba.red rgba.green rgba.blue none}
+  channel0 rgba
   expr0 max(r,g,b)
-  name achromatic
+  channel1 none
+  channel2 none
+  channel3 none
+  name Norm_MaxRGB
   xpos -260
-  ypos -154
+  ypos -189
  }
-set N420bd290 [stack 0]
  Dot {
-  name Dot1
+  name Dot6
   xpos -226
-  ypos -102
+  ypos -126
  }
-set N354f7b20 [stack 0]
+set N4b7ba180 [stack 0]
  Dot {
-  name Dot3
+  name Dot8
   xpos -226
-  ypos 66
+  ypos 54
  }
-push $N354f7b20
- Expression {
-  temp_name0 c_r
-  temp_expr0 1-r
-  temp_name1 c_g
-  temp_expr1 1-g
-  temp_name2 c_b
-  temp_expr2 1-b
-  expr0 1-(c_r<(1-thr)?c_r:(1-thr)+thr*tanh(((c_r-(1-thr))/thr)))
-  expr1 1-(c_g<(1-thr)?c_g:(1-thr)+thr*tanh(((c_g-(1-thr))/thr)))
-  expr2 1-(c_b<(1-thr)?c_b:(1-thr)+thr*tanh(((c_b-(1-thr))/thr)))
-  name toe
-  xpos -150
-  ypos -106
-  disable {{parent.shd_rolloff<0.004}}
-  addUserKnob {20 Params_tab l Params}
-  addUserKnob {7 thr t "complement of threshold"}
-  thr {{parent.shd_rolloff}}
- }
- Expression {
-  expr0 abs(r)
-  expr1 abs(g)
-  expr2 abs(b)
-  name abs
-  xpos -150
-  ypos -82
- }
-set N3539e690 [stack 0]
- Dot {
-  name Dot7
-  xpos -116
-  ypos 18
- }
-push $N3539e690
-push $N420bd290
-push $N358f7310
- Merge2 {
+push $N4b7ba180
+push $N50366260
+ MergeExpression {
   inputs 2
-  operation minus
-  bbox B
-  Achannels rgb
-  Bchannels rgb
-  output rgb
-  name Merge1
+  expr0 Ar==0?0:(Ar-Br)/fabs(Ar)
+  expr1 Ag==0?0:(Ag-Bg)/fabs(Ag)
+  expr2 Ab==0?0:(Ab-Bb)/fabs(Ab)
+  name RGB_to_InverseRGBRatios
   xpos -40
-  ypos -154
+  ypos -129
+ }
+ Dot {
+  name Dot9
+  xpos -6
+  ypos -96
+ }
+set N4b7ae1c0 [stack 0]
+ Expression {
+  expr0 r<t.r?r:pow(r-t.r+s.r*sqrt(s.r*s.r/4),2)/(s.r*s.r)-s.r*s.r/4+t.r
+  expr1 g<t.g?g:pow(g-t.g+s.g*sqrt(s.g*s.g/4),2)/(s.g*s.g)-s.g*s.g/4+t.g
+  expr2 b<t.b?b:pow(b-t.b+s.b*sqrt(s.b*s.b/4),2)/(s.b*s.b)-s.b*s.b/4+t.b
+  name uncompress
+  xpos -150
+  ypos -70
+  addUserKnob {20 Params_tab l Params}
+  addUserKnob {18 t}
+  t {{1-parent.threshold} {1-parent.threshold} {1-parent.threshold}}
+  addUserKnob {6 t_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 d R 0 2}
+  d {{1+parent.cyan} {1+parent.magenta} {1+parent.yellow}}
+  addUserKnob {6 d_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 s}
+  s {{parent.compress.s} {parent.compress.s} {parent.compress.s}}
+  addUserKnob {6 s_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ }
+push $N4b7ae1c0
+ Expression {
+  expr0 r<t.r?r:s.r*sqrt(r-t.r+s.r*s.r/4)-s.r*sqrt(s.r*s.r/4)+t.r
+  expr1 g<t.g?g:s.g*sqrt(g-t.g+s.g*s.g/4)-s.g*sqrt(s.g*s.g/4)+t.g
+  expr2 b<t.b?b:s.b*sqrt(b-t.b+s.b*s.b/4)-s.b*sqrt(s.b*s.b/4)+t.b
+  maskChannelMask rgba.red
+  name compress
+  xpos 70
+  ypos -70
+  addUserKnob {20 Params_tab l Params}
+  addUserKnob {18 t}
+  t {{1-parent.threshold} {1-parent.threshold} {1-parent.threshold}}
+  addUserKnob {6 t_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 d R 1 2}
+  d {{1+parent.cyan} {1+parent.magenta} {1+parent.yellow}}
+  addUserKnob {6 d_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {18 s}
+  s {{(1-this.t)/sqrt(max(1.001,d)-1)} {(1-this.t)/sqrt(max(1.001,d)-1)} {(1-this.t)/sqrt(max(1.001,d)-1)}}
+  addUserKnob {6 s_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ }
+ Switch {
+  inputs 2
+  which {{parent.direction}}
+  name SwitchDirection
+  xpos -40
+  ypos -9
  }
  MergeExpression {
   inputs 2
-  expr0 Ar==0?0:Br/Ar
-  expr1 Ag==0?0:Bg/Ag
-  expr2 Ab==0?0:Bb/Ab
-  channel3 none
-  name MergeDivide
+  expr0 Ar-fabs(Ar)*Br
+  expr1 Ag-fabs(Ag)*Bg
+  expr2 Ab-fabs(Ab)*Bb
+  name InverseRGBRatios_to_RGB
   xpos -40
-  ypos -82
- }
- Group {
-  name compress
-  xpos -40
-  ypos -34
-  addUserKnob {20 compress}
-  addUserKnob {18 threshold}
-  threshold 0.2
-  addUserKnob {6 threshold_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
-  addUserKnob {7 power R 1 5}
-  power 1.2
-  addUserKnob {7 cyan}
-  cyan 0.09
-  addUserKnob {7 magenta}
-  magenta 0.24
-  addUserKnob {7 yellow}
-  yellow 0.12
-  addUserKnob {26 ""}
-  addUserKnob {6 invert +STARTLINE}
-  invert {{parent.direction}}
- }
-  Input {
-   inputs 0
-   name Input
-   xpos -260
-   ypos -250
-  }
-set N326b77d0 [stack 0]
-  Expression {
-   temp_name0 s_x
-   temp_expr0 (lim_x-thr_x)/pow(pow((1-thr_x)/(lim_x-thr_x),-p)-1,1/p)
-   temp_name1 s_y
-   temp_expr1 (lim_y-thr_y)/pow(pow((1-thr_y)/(lim_y-thr_y),-p)-1,1/p)
-   temp_name2 s_z
-   temp_expr2 (lim_z-thr_z)/pow(pow((1-thr_z)/(lim_z-thr_z),-p)-1,1/p)
-   expr0 r<thr_x||lim_x<1.0001?r:r>(thr_x+s_x)?r:thr_x+s_x*pow(-(pow((r-thr_x)/s_x,p)/(pow((r-thr_x)/s_x,p)-1)),1/p)
-   expr1 g<thr_y||lim_y<1.0001?g:g>(thr_y+s_y)?g:thr_y+s_y*pow(-(pow((g-thr_y)/s_y,p)/(pow((g-thr_y)/s_y,p)-1)),1/p)
-   expr2 b<thr_z||lim_z<1.0001?b:b>(thr_z+s_z)?b:thr_z+s_z*pow(-(pow((b-thr_z)/s_z,p)/(pow((b-thr_z)/s_z,p)-1)),1/p)
-   name uncompress
-   xpos -150
-   ypos -202
-   addUserKnob {20 Params_tab l Params}
-   addUserKnob {7 thr_x}
-   thr_x {{1-parent.threshold.r}}
-   addUserKnob {7 thr_y}
-   thr_y {{1-parent.threshold.g}}
-   addUserKnob {7 thr_z}
-   thr_z {{1-parent.threshold.b}}
-   addUserKnob {7 lim_x}
-   lim_x {{parent.cyan+1}}
-   addUserKnob {7 lim_y}
-   lim_y {{parent.magenta+1}}
-   addUserKnob {7 lim_z}
-   lim_z {{parent.yellow+1}}
-   addUserKnob {7 p R 1 5}
-   p {{parent.power}}
-  }
-push $N326b77d0
-  Expression {
-   temp_name0 s_x
-   temp_expr0 (lim_x-thr_x)/pow(pow((1-thr_x)/(lim_x-thr_x),-p)-1,1/p)
-   temp_name1 s_y
-   temp_expr1 (lim_y-thr_y)/pow(pow((1-thr_y)/(lim_y-thr_y),-p)-1,1/p)
-   temp_name2 s_z
-   temp_expr2 (lim_z-thr_z)/pow(pow((1-thr_z)/(lim_z-thr_z),-p)-1,1/p)
-   expr0 r<thr_x||lim_x<1.0001?r:thr_x+s_x*((r-thr_x)/s_x)/(pow(1+pow((r-thr_x)/s_x,p),1/p))
-   expr1 g<thr_y||lim_y<1.0001?g:thr_y+s_y*((g-thr_y)/s_y)/(pow(1+pow((g-thr_y)/s_y,p),1/p))
-   expr2 b<thr_z||lim_z<1.0001?b:thr_z+s_z*((b-thr_z)/s_z)/(pow(1+pow((b-thr_z)/s_z,p),1/p))
-   name compress
-   xpos -370
-   ypos -202
-   addUserKnob {20 Params_tab l Params}
-   addUserKnob {7 thr_x}
-   thr_x {{1-parent.threshold.r}}
-   addUserKnob {7 thr_y}
-   thr_y {{1-parent.threshold.g}}
-   addUserKnob {7 thr_z}
-   thr_z {{1-parent.threshold.b}}
-   addUserKnob {7 lim_x}
-   lim_x {{parent.cyan+1}}
-   addUserKnob {7 lim_y}
-   lim_y {{parent.magenta+1}}
-   addUserKnob {7 lim_z}
-   lim_z {{parent.yellow+1}}
-   addUserKnob {7 p R 1 5}
-   p {{parent.power}}
-  }
-  Switch {
-   inputs 2
-   which {{parent.invert}}
-   name switch_direction
-   xpos -260
-   ypos -154
-  }
-  Output {
-   name Output
-   xpos -260
-   ypos -106
-  }
- end_group
- Merge2 {
-  inputs 2
-  operation multiply
-  bbox B
-  Achannels rgb
-  Bchannels rgb
-  output rgb
-  name Merge3
-  xpos -40
-  ypos 14
- }
- Merge2 {
-  inputs 2
-  operation minus
-  bbox B
-  Achannels rgb
-  Bchannels rgb
-  output rgb
-  name Merge5
-  xpos -40
-  ypos 62
+  ypos 51
  }
  Output {
   name Output

@@ -1,11 +1,9 @@
-DEFINE_UI_PARAMS(threshold_c, threshold c, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
-DEFINE_UI_PARAMS(threshold_m, threshold m, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
-DEFINE_UI_PARAMS(threshold_y, threshold y, DCTLUI_SLIDER_FLOAT, 0.2f, 0.0f, 0.6f, 0.0f);
-DEFINE_UI_PARAMS(power, power, DCTLUI_SLIDER_FLOAT, 1.2f, 1.0f, 3.0f, 1.0f);
-DEFINE_UI_PARAMS(shd_rolloff, shd rolloff, DCTLUI_SLIDER_FLOAT, 0.0f, 0.0f, 0.03f, 0.0f);
-DEFINE_UI_PARAMS(cyan, cyan, DCTLUI_SLIDER_FLOAT, 0.09f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(magenta, magenta, DCTLUI_SLIDER_FLOAT, 0.24f, 0.0f, 1.0f, 0.0f);
-DEFINE_UI_PARAMS(yellow, yellow, DCTLUI_SLIDER_FLOAT, 0.12f, 0.0f, 1.0f, 0.0f);
+DEFINE_UI_PARAMS(th_c, thr c, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
+DEFINE_UI_PARAMS(th_m, thr m, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
+DEFINE_UI_PARAMS(th_y, thr y, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
+DEFINE_UI_PARAMS(d_c, dist c, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0);
+DEFINE_UI_PARAMS(d_m, dist m, DCTLUI_SLIDER_FLOAT, 0.2, 0.0, 0.4, 0.0);
+DEFINE_UI_PARAMS(d_y, dist y, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0);
 DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescc, acescg}, {acescct, acescc, acescg});
 DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
 
@@ -50,37 +48,12 @@ __DEVICE__ float acescc_to_lin(float in) {
   }
 }
 
-// calculate compressed distance
-__DEVICE__ float compress(float x, float l, float t, float p, bool invert) {
-  float cdist;
-  // power(p) compression function plot https://www.desmos.com/calculator/54aytu7hek
-  float s = (l-t)/_powf(_powf((1.0f-t)/(l-t),-p)-1.0f,1.0f/p); // calc y=1 intersect
-  if (l < 1.0001f) {
-    return x; // disable compression, avoid nan
-  }
-  if (x < t) {
-    cdist = x;
-  } 
-  else {
-    if (invert == 0) {
-      cdist = t+s*((x-t)/s)/(_powf(1.0f+_powf((x-t)/s,p),1.0f/p)); // compress
-    } else {
-      if (x > (t + s)) {
-        cdist = x; // avoid singularity
-      }
-      cdist = t+s*_powf(-(_powf((x-t)/s,p)/(_powf((x-t)/s,p)-1.0f)),1.0f/p); // uncompress
-    }
-  }
-  return cdist;
-}
-
 __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B) 
 { 
 
-  // source pixels
   float3 rgb = make_float3(p_R, p_G, p_B);
   
-  // working colorspace to linear
+  // Linearize working colorspace
   if (working_colorspace == acescct) {
     rgb.x = acescct_to_lin(rgb.x);
     rgb.y = acescct_to_lin(rgb.y);
@@ -91,69 +64,50 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     rgb.z = acescc_to_lin(rgb.z);
   }
 
-  // thr is the percentage of the core gamut to protect: the complement of threshold.
-  float3 thr = make_float3(
-    1.0f-_fmaxf(0.00001, threshold_c),
-    1.0f-_fmaxf(0.00001, threshold_m),
-    1.0f-_fmaxf(0.00001, threshold_y));
+  // Amount of outer gamut to affect
+  float3 th = 1.0f-make_float3(th_c, th_m, th_y);
+
+  // Distance limit: How far beyond the gamut boundary to compress
+  float3 dl = 1.0f+make_float3(d_c, d_m, d_y);
+
+  // Calculate scale so compression function passes through distance limit: (x=dl, y=1)
+  float3 s;
+  s.x = (1.0f-th.x)/_sqrtf(_fmaxf(1.001f, dl.x)-1.0f);
+  s.y = (1.0f-th.y)/_sqrtf(_fmaxf(1.001f, dl.y)-1.0f);
+  s.z = (1.0f-th.z)/_sqrtf(_fmaxf(1.001f, dl.z)-1.0f);
   
-  // lim is the distance beyond the gamut boundary that will be compressed to the gamut boundary.
-  // lim = 0.2 will compress from a distance of 1.2 from achromatic to 1.0 (the gamut boundary).  
-  float3 lim;
-  lim = make_float3(cyan+1.0f, magenta+1.0f, yellow+1.0f);
-  
-  // achromatic axis 
-  float ach = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
-  
-  // achromatic shadow rolloff
-  float ach_shd;
-  if (shd_rolloff < 0.004f) {
-    // disable shadow rolloff functionality. 
-    // values below 0.004 cause strange behavior, actually increasing distance in some cases.
-    // if ach < 0.0 and shd_rolloff is disabled, take absolute value. This preserves negative components after compression.
-    ach_shd = _fabs(ach);
+  // Achromatic axis
+  float ac = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
+
+  // Inverse RGB Ratios: distance from achromatic axis
+  float3 d = ac == 0.0f ? make_float3(0.0f) : (ac-rgb)/_fabs(ac);
+
+  float3 cd; // Compressed distance
+  // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj
+  if (invert == 0) {
+    cd.x = d.x<th.x?d.x:s.x*_sqrtf(d.x-th.x+s.x*s.x/4.0f)-s.x*_sqrtf(s.x*s.x/4.0f)+th.x;
+    cd.y = d.y<th.y?d.y:s.y*_sqrtf(d.y-th.y+s.y*s.y/4.0f)-s.y*_sqrtf(s.y*s.y/4.0f)+th.y;
+    cd.z = d.z<th.z?d.z:s.z*_sqrtf(d.z-th.z+s.z*s.z/4.0f)-s.z*_sqrtf(s.z*s.z/4.0f)+th.z;
   } else {
-    // lift ach below threshold using a tanh compression function. 
-    // this reduces large distance values in shadow grain, which can cause differences when inverting.
-    ach_shd = 1.0f-((1.0f-ach)<(1.0f-shd_rolloff)?(1.0f-ach):(1.0f-shd_rolloff)+shd_rolloff*_tanhf((((1.0f-ach)-(1.0f-shd_rolloff))/shd_rolloff)));
-  } 
-
-  // distance from the achromatic axis for each color component aka inverse rgb ratios
-  // distance is normalized by achromatic, so that 1.0f is at gamut boundary. avoid 0 div
-  float3 dist;
-  dist.x = ach_shd == 0.0f ? 0.0f : (ach-rgb.x)/ach_shd;
-  dist.y = ach_shd == 0.0f ? 0.0f : (ach-rgb.y)/ach_shd;
-  dist.z = ach_shd == 0.0f ? 0.0f : (ach-rgb.z)/ach_shd;
-
-  // compress distance with user controlled parameterized shaper function
-  float3 cdist = make_float3(
-    compress(dist.x, lim.x, thr.x, power, invert),
-    compress(dist.y, lim.y, thr.y, power, invert),
-    compress(dist.z, lim.z, thr.z, power, invert));
-
-  // recalculate rgb from compressed distance and achromatic
-  // effectively this scales each color component relative to achromatic axis by the compressed distance
-  float3 crgb = make_float3(
-    ach-cdist.x*ach_shd,
-    ach-cdist.y*ach_shd,
-    ach-cdist.z*ach_shd);
-
-  // catch nans just in case  
-  crgb.x = isnan(crgb.x) ? 0.0f : crgb.x;
-  crgb.y = isnan(crgb.y) ? 0.0f : crgb.y;
-  crgb.z = isnan(crgb.z) ? 0.0f : crgb.z;
-
-  // linear to working colorspace
-  if (working_colorspace == acescct) {
-    crgb.x = lin_to_acescct(crgb.x);
-    crgb.y = lin_to_acescct(crgb.y);
-    crgb.z = lin_to_acescct(crgb.z);
-  } else if (working_colorspace == acescc) {
-    crgb.x = lin_to_acescc(crgb.x);
-    crgb.y = lin_to_acescc(crgb.y);
-    crgb.z = lin_to_acescc(crgb.z);
+    cd.x = d.x<th.x?d.x:_powf(d.x-th.x+s.x*_sqrtf(s.x*s.x/4.0f),2.0f)/(s.x*s.x)-s.x*s.x/4.0f+th.x;
+    cd.y = d.y<th.y?d.y:_powf(d.y-th.y+s.y*_sqrtf(s.y*s.y/4.0f),2.0f)/(s.y*s.y)-s.y*s.y/4.0f+th.y;
+    cd.z = d.z<th.z?d.z:_powf(d.z-th.z+s.z*_sqrtf(s.z*s.z/4.0f),2.0f)/(s.z*s.z)-s.z*s.z/4.0f+th.z;
   }
 
-  // write output
-  return crgb;
+  // Inverse RGB Ratios to RGB
+  rgb = ac-cd*_fabs(ac);
+
+  // Linear to working colorspace
+  if (working_colorspace == acescct) {
+    rgb.x = lin_to_acescct(rgb.x);
+    rgb.y = lin_to_acescct(rgb.y);
+    rgb.z = lin_to_acescct(rgb.z);
+  } else if (working_colorspace == acescc) {
+    rgb.x = lin_to_acescc(rgb.x);
+    rgb.y = lin_to_acescc(rgb.y);
+    rgb.z = lin_to_acescc(rgb.z);
+  }
+
+  // Return output RGB
+  return rgb;
 }
