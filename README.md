@@ -118,7 +118,7 @@ The Arri rendering looks fine. The ACES rendering looks bad. It looks bad becaus
 # About
 This tool was developed as part of the [ACES Gamut Mapping Virtual Working Group](https://community.acescentral.com/c/aces-development-acesnext/vwg-aces-gamut-mapping-working-group/80). For more info check out the [working group proposal](https://www.dropbox.com/s/5hz8e07ydx0d2bm/ACES_Gamut_Mapping_Working_Group_Proposal_Approved.pdf).
 
-Here is a contact sheet of [sample images](https://www.dropbox.com/sh/u6z2a0jboo4vno8/AAB-10qcflhpr0C5LWhs7Kq4a?dl=0) showing the visual appearance highly chromatic camera source colorimetry rendered through the ACES Display Transform.
+Here is a contact sheet of [sample images](https://www.dropbox.com/sh/u6z2a0jboo4vno8/AAB-10qcflhpr0C5LWhs7Kq4a?dl=0) showing the visual appearance of highly chromatic camera source colorimetry rendered through the ACES Display Transform.
 
 [<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage.rrt.jpg?raw=true) [<img src=https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg width=48% height=48%/>](https://github.com/jedypod/gamut-compress/blob/master/images/collage_compressed.rrt.jpg?raw=true)
 
