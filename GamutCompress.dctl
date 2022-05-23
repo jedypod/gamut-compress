@@ -1,11 +1,11 @@
-DEFINE_UI_PARAMS(th_c, thr c, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
-DEFINE_UI_PARAMS(th_m, thr m, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
-DEFINE_UI_PARAMS(th_y, thr y, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0);
-DEFINE_UI_PARAMS(d_c, dist c, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0);
-DEFINE_UI_PARAMS(d_m, dist m, DCTLUI_SLIDER_FLOAT, 0.2, 0.0, 0.4, 0.0);
-DEFINE_UI_PARAMS(d_y, dist y, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0);
-DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescc, acescg}, {acescct, acescc, acescg});
-DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(th_c, thr c, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0)
+DEFINE_UI_PARAMS(th_m, thr m, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0)
+DEFINE_UI_PARAMS(th_y, thr y, DCTLUI_SLIDER_FLOAT, 0.15, 0.0, 0.3, 0.0)
+DEFINE_UI_PARAMS(d_c, dist c, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0)
+DEFINE_UI_PARAMS(d_m, dist m, DCTLUI_SLIDER_FLOAT, 0.2, 0.0, 0.4, 0.0)
+DEFINE_UI_PARAMS(d_y, dist y, DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 0.4, 0.0)
+DEFINE_UI_PARAMS(working_colorspace, working space, DCTLUI_COMBO_BOX, 0, {acescct, acescc, acescg}, {acescct, acescc, acescg})
+DEFINE_UI_PARAMS(invert, invert, DCTLUI_CHECK_BOX, 0)
 
 
 // convert acescg to acescct
@@ -80,7 +80,7 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
   float ac = _fmaxf(rgb.x, _fmaxf(rgb.y, rgb.z));
 
   // Inverse RGB Ratios: distance from achromatic axis
-  float3 d = ac == 0.0f ? make_float3(0.0f) : (ac-rgb)/_fabs(ac);
+  float3 d = ac == 0.0f ? make_float3(0.0f, 0.0f, 0.0f) : (ac-rgb)/_fabs(ac);
 
   float3 cd; // Compressed distance
   // Parabolic compression function: https://www.desmos.com/calculator/nvhp63hmtj
