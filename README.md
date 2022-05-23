@@ -20,7 +20,7 @@ Above is a graph of human cone cell response to varying wavelengths of light.
 The CIE1931 chromaticity diagram is a mathematical transformation of the 3 dimensional cone response curves into 2 dimensions. The xy chromaticity diagram is a useful visualization, but remember, there is an axis missing.
 
 Light, both emitted and reflected, has a [Spectral Power Distribution](https://en.wikipedia.org/wiki/Spectral_power_distribution) (SPD).  
-![light sources SPD](https://www.researchgate.net/profile/Yu-Man-Shang/publication/259448948/figure/fig2/AS:213975351468035@1428027107480/Light-source-SPD-curves-for-Ablue-LED-Bwhite-LED-Cwhite-CFL-and-Dyellow-CFL.png)  
+![light sources SPD](images/screenshots/Light-source-SPD-curves-for-Ablue-LED-Bwhite-LED-Cwhite-CFL-and-Dyellow-CFL.png)  
 (from [this article on how damaging blue light is to rat retinas](https://www.researchgate.net/figure/Light-source-SPD-curves-for-Ablue-LED-Bwhite-LED-Cwhite-CFL-and-Dyellow-CFL_fig2_259448948))  
 
 Look at the SPD of the Blue LED. It is quite narrow and spiky. This "narrow-bandwidth" light is what we perceive as highly colorful.
@@ -144,7 +144,7 @@ Written by Jed Smith in [collaboration](https://community.acescentral.com/t/rgb-
 
 Also thanks to the contributions of [@nick-shaw](https://github.com/nick-shaw) for the initial versions of the DCTL and Matchbox implementations, and to Jacob Danell for the first version of the Fuse implementation.
 
-If you are looking for the so-called "Reference" Gamut Compression adopted by ACES in version 1.2, you can find it at [here](https://docs.acescentral.com/guides/rgc-user/). However I would not recommend using it for the following reasons:
+If you are looking for the so-called "Reference" Gamut Compression adopted by ACES in version 1.2, you can find it [here](https://docs.acescentral.com/guides/rgc-user/). However I would not recommend using it for the following reasons:
 1. It has a fixed parameterization for the per-channel compression settings, which will yield different results depending on the camera source colorimetry.
 2. It uses a more aggressive compression function which does not distribute values as evenly, resulting in the need for lower threshold settings and more problematic inversion (if that is required).
 3. It will result in distortion of the chromaticities as part of the compression. This may be fine for creative grading, but for more technical workflows like in VFX, a dominant-wavelength preserving compression may be desired instead.
