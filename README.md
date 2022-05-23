@@ -75,7 +75,7 @@ And therefore we have imaginary primaries in camera encoding gamuts.
 Well, if you are working in the camera source gamut, and using the camera display rendering transform, everything will be fine. Problems start to come into play if you choose a smaller working gamut compared to the camera gamut.  
 ![ACEScg vs Arri Wide Gamut](images/screenshots/CIE1931_xy_chromaticity_diagram_aces_awg.png)  
 
-Take the ACES system for example. The suggested working gamut is ACEScg, as shown above. You might think that if you convert your Arri Alexa Wide Gamut source images into ACEScg, everything would be fine.
+Take ACES for example. The suggested working gamut is ACEScg, as shown above. You might think that if you convert your Arri Alexa Wide Gamut source images into ACEScg, everything would be fine.
 
 But conversion might be the wrong word. Converting from one gamut to another does not actually change the colorimetric meaning of the pixel data. It only changes your _frame of reference_ to the data.
 
