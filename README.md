@@ -12,7 +12,7 @@ This diagram is called the CIE 1931 "little x, little y" chromaticity diagram. T
 But why is it called the "Spectral" locus? Human eyes are sensitive to a specific range of wavelengths on the electromagnetic spectrum. We perceive this electromagnetic energy as light and color with our visual system.
 ![wavelengths](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Linear_visible_spectrum.svg/1920px-Linear_visible_spectrum.svg.png)  (from the wikipedia article on [Spectral Colors](https://en.wikipedia.org/wiki/Spectral_color))
 
-Our eyes have 3 cone cells which are sensitive to specific wavelengths. These cells are called L (for long wavelength blue light), M (for medium wavelength green light), and S (for short wavelength red light).
+Our eyes have 3 cone cells which are sensitive to specific wavelengths. These cells are called L (for long wavelength red light), M (for medium wavelength green light), and S (for short wavelength blue light).
 
 ![LMS SPD](https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cone-fundamentals-with-srgb-spectrum.svg/1920px-Cone-fundamentals-with-srgb-spectrum.svg.png)  
 Above is a graph of human cone cell response to varying wavelengths of light. 
