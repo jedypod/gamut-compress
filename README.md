@@ -147,4 +147,4 @@ Also thanks to the contributions of [@nick-shaw](https://github.com/nick-shaw) f
 If you are looking for the so-called "Reference" Gamut Compression adopted by ACES in version 1.2, you can find it [here](https://docs.acescentral.com/guides/rgc-user/). However I would not recommend using it for the following reasons:
 1. It has a fixed parameterization for the per-channel compression settings, which will yield different results depending on the camera source colorimetry.
 2. It uses a more aggressive compression function which does not distribute values as evenly, resulting in the need for lower threshold settings and more problematic inversion (if that is required).
-3. It will result in distortion of the chromaticities as part of the compression. This may be fine for creative grading, but for more technical workflows like in VFX, a dominant-wavelength preserving compression may be desired instead.
+3. It will result in distortion of the chromaticities as part of the compression. This may be fine for creative grading, but for more technical workflows like in VFX, a linear compression towards the whitepoint may be desired instead.
