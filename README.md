@@ -2,22 +2,22 @@
 Gamut-compress is a tool which allows you to compress highly chromatic camera source colorimetry into a smaller gamut.
 
 # What's a Gamut?
-Let's start on a solid base of shared understanding. We usually work in RGB colorspaces. RGB colorspaces have 3 values defining color: Red, green, and blue. A gamut is a coordinate system or a map which gives meaning to these RGB values. The boundary of gamut is defined by 3 coordinates, forming a triangle.
+Let's start on a solid base of shared understanding. We usually work in RGB colorspaces. RGB colorspaces have 3 pixel values to represent color information: Red, green, and blue. A gamut is a coordinate system or a map which gives actual   meaning to these pixel values. A gamut is defined by its boundary, formed by 3 coordinates in the CIE 1931 xy chromaticity coordinate system. These coordinates are called the "primaries".
 
-The coordinate system in which gamuts defined is called the CIE 1931 xy chromaticity diagram. You have probably seen it before:
+You have probably seen the CIE 1931 xy chromaticity diagram before.   
 ![CIE1931 Chromaticity Diagram](images/screenshots/CIE1931_xy_chromaticity_diagram.png)  
-This diagram is called the CIE 1931 "little x, little y" chromaticity diagram. The horseshoe shape is called the spectral locus, and represents the boundary of color visible to a human observer. With this coordindate system, we can represent any possible perceived color using a 2d (x, y) coordinate.
+This diagram is called the CIE 1931 "little x, little y" chromaticity diagram. The horseshoe shape is called the spectral locus, and represents the boundary of color visible to a human observer. With this coordindate system, we can represent any possible color using a 2d (x, y) coordinate.
 
 ## Quick Detour Into Spectral Power
 But why is it called the "Spectral" locus? Human eyes are sensitive to a specific range of wavelengths on the electromagnetic spectrum. We perceive this electromagnetic energy as light and color with our visual system.
 ![wavelengths](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Linear_visible_spectrum.svg/1920px-Linear_visible_spectrum.svg.png)  (from the wikipedia article on [Spectral Colors](https://en.wikipedia.org/wiki/Spectral_color))
 
-Our eyes have 3 cone cells which are sensitive to specific wavelengths. These cells are called L (for long wavelength red light), M (for medium wavelength green light), and S (for short wavelength blue light).
+Our eyes have 3 cone cells, each with varying sensitivity to specific wavelengths. These cells are called L (for long wavelength red light), M (for medium wavelength green light), and S (for short wavelength blue light).
 
 ![LMS SPD](https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cone-fundamentals-with-srgb-spectrum.svg/1920px-Cone-fundamentals-with-srgb-spectrum.svg.png)  
-Above is a graph of human cone cell response to varying wavelengths of light. 
+Above is a graph of human cone cell response to varying wavelengths of light.
 
-The CIE1931 chromaticity diagram is a mathematical transformation of the 3 dimensional cone response curves into 2 dimensions. The xy chromaticity diagram is a useful visualization, but remember, there is an axis missing.
+The CIE1931 chromaticity diagram is a mathematical transformation of the 3 dimensional cone response curves into 2 dimensions. The xy chromaticity diagram is a useful visualization, but keep in mind a couple of things: it only represents color in an abstract non-perceptual way, and the luminance axis is not represented.
 
 Light, both emitted and reflected, has a [Spectral Power Distribution](https://en.wikipedia.org/wiki/Spectral_power_distribution) (SPD).  
 ![light sources SPD](images/screenshots/Light-source-SPD-curves-for-Ablue-LED-Bwhite-LED-Cwhite-CFL-and-Dyellow-CFL.png)  
@@ -28,12 +28,12 @@ Look at the SPD of the Blue LED. It is quite narrow and spiky. This "narrow-band
 ![Spinach leaves SPD](https://www.researchgate.net/publication/38958266/figure/fig6/AS:608499084034050@1522088895398/Absorption-spectrum-of-LHC-II-extracted-from-spinach-leaves-recorded-at-room.png)  
 (from [this article on light absorption in spinach leaves](https://www.researchgate.net/publication/38958266_Femtosecond_pump_probe_spectroscopy_for_the_study_of_energy_transfer_of_light-harvesting_complexes_from_extractions_of_spinach_leaves))  
 
-Above is the SPD of light absorption in a spinach leaf. Because of the physics of light, light reflecting off diffuse objects have more broad spectral power distributions. 
+Above is the SPD of light absorption in a spinach leaf. It has a more broad SPD. Most organic / non-manufactured objects do (with some obvious exceptions like beetles and flowers and hummingbirds). 
 
-Reflected light has a colorfullness limit.
+Therefore because of the physics of light and surfaces, light reflecting off diffuse objects have more broad spectral power distributions and will therefore appear less colorful than some artificial emitted light from an LED. One could say that reflected light has a colorfullness limit.
 
 ## Back to Our Chromaticity Diagram
-With this basic knowledge of light physics under our belts, let's get back to the chromaticity diagram.
+With this basic knowledge of light physics, let's get back to the chromaticity diagram.
 
 ![Spinach Laser Pointer](images/screenshots/CIE1931_xy_chromaticity_diagram_pointers.png)  
 On our chromaticity diagram, spinach might be located somewhere around the above location. A green laser, with a narrow spiky spectral power distribution, would be located very near to the spectral locus.
@@ -77,7 +77,7 @@ Well, if you are working in the camera source gamut, and using the camera displa
 
 Take ACES for example. The suggested working gamut is ACEScg, as shown above. You might think that if you convert your Arri Alexa Wide Gamut source images into ACEScg, everything would be fine.
 
-But conversion might be the wrong word. Converting from one gamut to another does not actually change the colorimetric meaning of the pixel data. It only changes your _frame of reference_ to the data.
+But conversion might be the wrong word. Converting from one gamut to another does change the values of the pixels. However it does not actually change the colorimetric meaning of the pixel data. You could say that by converting between gamuts, you are changing _frame of reference_ to the same colors.
 
 Let's look at an example - the infamous Blue Bar image.  
 ![Blue Bar Image](images/screenshots/bluebar_image.png)  
